@@ -279,7 +279,7 @@ public class Game implements ActionListener {
 
             // Do the POST request...
             URL url = new URL( "https://u9m0v5iwsk.execute-api.us-west-2.amazonaws.com/default/classBuzzer" );
-            HttpURLConnection conn= (HttpURLConnection) url.openConnection();           
+            HttpURLConnection conn= (HttpURLConnection) url.openConnection();
             conn.setDoOutput( true );
             conn.setInstanceFollowRedirects( false );
             conn.setRequestMethod( "POST" );
@@ -289,7 +289,7 @@ public class Game implements ActionListener {
             conn.setUseCaches( false );
             try (OutputStream os = conn.getOutputStream()) {
                 byte[] input = jsonPayload.getBytes("utf-8");
-                os.write(input, 0, input.length);			
+                os.write(input, 0, input.length);
             }
 
             // Response..

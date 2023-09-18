@@ -9,6 +9,9 @@ public class Conditionals {
         //  minThreeStars("*-") -> false
         //  minThreeStars("***abc") -> true
         //  minThreeStars("**a*") -> false
+
+        if (text)
+
         return false;
     }
 

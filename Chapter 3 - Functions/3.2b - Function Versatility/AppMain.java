@@ -10,4 +10,8 @@ public class AppMain {
     // Put your functions here...
     // Function 1 should: return a value with a maximum of a provided value, [0,𝑚𝑎𝑥𝑉𝑎𝑙𝑢𝑒).
     // Function 2 should: should return a value between two provided doubles, [𝑚𝑖𝑛𝑉𝑎𝑙𝑢𝑒,𝑚𝑎𝑥𝑉𝑎𝑙𝑢𝑒).
+
+    static double max(double num, double max) {
+        return Math.min(num, max);
+    }
 }

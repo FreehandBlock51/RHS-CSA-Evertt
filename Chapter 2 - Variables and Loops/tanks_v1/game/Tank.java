@@ -180,7 +180,7 @@ public class Tank extends GameObject {
 		this.tankMoveSpeed = STARTING_MOVE_SPEED;
 		this.tankTurnSpeed = STARTING_TURN_SPEED;
 		this.ammoMaxRange = STARTING_AMMO_RANGE;
-		this.timeLastShot = LocalTime.now();		
+		this.timeLastShot = LocalTime.now();
 	}
 	
 	protected void kickBackTank(Vec2 dir) {
