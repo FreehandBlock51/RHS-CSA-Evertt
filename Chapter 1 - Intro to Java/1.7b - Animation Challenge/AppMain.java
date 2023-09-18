@@ -8,19 +8,28 @@ public class AppMain {
      * a frame of animation). A simple example is provided.
      */
     public static void main(String[] args) {
-        // TODO: Replace the sample code provide here with your own animation
         System.out.print("\033[33m"); // Yellow
-        System.out.print("    .");
-        endFrame();
-        System.out.print("   < >");
-        endFrame();
-        System.out.print("  <   >");
-        endFrame();
-        System.out.print(" <     >");
-        endFrame();
-        System.out.print("<       >");
+        while (true) {
+            System.out.println("Loading animation.");
+            endFrame();
+            System.out.println("Loading animation..");
+            endFrame();
+            System.out.println("Loading animation...");
+            endFrame();
+
+
+        // System.out.print("-");
+        // endFrame();
+        // System.out.print("/");
+        // endFrame();
+        // System.out.print("|");
+        // endFrame();
+        // System.out.print("\\");
+        // endFrame();
+        // System.out.print("-");
+        }
         // END of sample animation code
-        resetColor();
+        //resetColor();
     }
 
     /* Tips...
