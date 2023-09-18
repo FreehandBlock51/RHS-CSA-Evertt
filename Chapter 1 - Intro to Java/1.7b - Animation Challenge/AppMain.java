@@ -1,5 +1,3 @@
-import java.util.concurrent.TimeUnit;
-
 public class AppMain {
     /* Challenge Goal
      *  Create the most interesting Ascii Art animation that you can. This must
