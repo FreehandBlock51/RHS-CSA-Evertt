@@ -1,8 +1,13 @@
 public class AppMain {
-    public static void main(String[] ) {
-        AsciiArt art = new;
+    public static void main(String[] args) {
+        AsciiArt art = new AsciiArt();
         art.printFish();
         art.printCat();
-        // TODO
+        art.printRose();
+        art.printWorm();
+        art.printPersonalMessage();
+        art.printCaterpillar();
+        art.printIDK();
+        art.printMickey();
     }
 }
