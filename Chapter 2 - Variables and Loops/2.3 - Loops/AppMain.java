@@ -13,7 +13,7 @@ public class AppMain {
          *      2 7 12 17 22
          */
         for(int i = 0; i < 5; i++) {
-	        System.out.print( i + " " );
+	        System.out.print( (2 + i*5) + " " );
         }
         System.out.println();
     }
@@ -23,7 +23,7 @@ public class AppMain {
          *      4 7 10 13 16
          */
         for(int i = 0; i < 5; i++) {
-	        System.out.print( i + " " );
+	        System.out.print( (4 + 3*i) + " " );
         }
         System.out.println();
     }
@@ -34,8 +34,8 @@ public class AppMain {
          * 
          * hint: you'll need to update the end condition.
          */
-        for(int i = 0; i < 2; i++) {
-	        System.out.print( i + " " );
+        for(int i = 0; i < 6; i++) {
+	        System.out.print( (6 + 3*i) + " " );
         }
         System.out.println();
     }
@@ -44,8 +44,8 @@ public class AppMain {
         /* Update the code to output the following sequence...
          *      -15 -7 1 9 17 25
          */
-        for(int i = 0; i < 2; i++) {
-	        System.out.print( i + " " );
+        for(int i = 0; i < 6; i++) {
+	        System.out.print( (-15 + 8*i) + " " );
         }
         System.out.println();
     }
@@ -54,8 +54,8 @@ public class AppMain {
         /* Update the code to output the following sequence...
          *      10 9 8 7 6 5
          */
-        for(int i = 0; i < 2; i++) {
-	        System.out.print( i + " " );
+        for(int i = 0; i < 6; i++) {
+	        System.out.print( (10 - i) + " " );
         }
         System.out.println();
     }
@@ -66,7 +66,7 @@ public class AppMain {
          * 
          * hint: you can modify all three parameters to the loop.
          */
-        for(int i = 4; i < 10; i += 2) {
+        for(int i = 6; i <= 10; i += 2) {
 	        System.out.print( i + " " );
         }
         System.out.println();
