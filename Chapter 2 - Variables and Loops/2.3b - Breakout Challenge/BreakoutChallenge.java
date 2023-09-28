@@ -26,16 +26,53 @@ public class BreakoutChallenge {
     private static Simulation sim = new Simulation();
 
     public static void main(String[] args) {
-        /* TODO
-         * Replace this with your code. You can create your own methods in this class, but do not modify
-         *  the other files for the main part of this challenge (note that if/when you get to the additional 
-         *  challenge portion, then you can/should modify the other files).
-         * 
-         * Tips...
-         *  - You should probably start by drawing the walls & ceiling.
-         *  - Call 'sim.endFrame()' after drawing the scene. This will update the simulation, then pause & clear the terminal.
-         *  - You should keep looping until the game is complete (check out Simulations's public methods to check for done).
-         *  - Look at the comments at the top of Simulation for more details about the game world & how to use it.
-         */
+        do {
+            drawFrame();
+        } while (sim.isGameActive());
+    }
+
+    static final char CEILING_CHAR = '=';
+    static final char WALL_CHAR = '|';
+    static final char BRICK_CHAR = '@';
+    static final char PADDLE_CHAR = '-';
+    static final char BALL_CHAR = 'o';
+    static final char EMPTY_CHAR = ' ';
+    static final int GRID_SIZE = 2;
+
+    static void drawFrame() {
+        int gridOffsetX, gridOffsetY;
+        for (int y = Simulation.GRID_HEIGHT * GRID_SIZE; y >= 0; y--) {
+            gridOffsetY = y % GRID_SIZE;
+            y /= GRID_SIZE;
+
+            System.out.print(WALL_CHAR);
+            for (int x = 0; x < Simulation.GRID_WIDTH * GRID_SIZE; x++) {
+                gridOffsetX = x % GRID_SIZE;
+                x /= GRID_SIZE;
+
+                if (y == Simulation.GRID_HEIGHT) {
+                    System.out.print(CEILING_CHAR);
+                }
+                else if (sim.isBrickInGridSquare(x, y)) {
+                    System.out.print(BRICK_CHAR);
+                }
+                else if (sim.isBallInGridSquare(x, y)) {
+                    System.out.print(BALL_CHAR);
+                }
+                else if (sim.isPaddleInGridSquare(x, y)) {
+                    System.out.print(PADDLE_CHAR);
+                }
+                else {
+                    System.out.print(EMPTY_CHAR);
+                }
+
+                x = (x * GRID_SIZE) + gridOffsetX;
+            }
+            System.out.print(WALL_CHAR);
+
+            System.out.println();
+            y = (y * GRID_SIZE) + gridOffsetY;
+        }
+        sim.endFrame();
     }
 }
