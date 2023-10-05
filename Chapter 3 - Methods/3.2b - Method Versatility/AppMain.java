@@ -14,4 +14,8 @@ public class AppMain {
     static double max(double num, double max) {
         return Math.min(num, max);
     }
+
+    static double clamp(double num, double min, double max) {
+        return Math.max(Math.min(num, max), min);
+    }
 }
