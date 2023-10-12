@@ -60,34 +60,35 @@ public class Hangman {
 	// Prints out the game image to the terminal based on how many incorrect guesses have been made.
 	// This game has 7 guesses. Be creative!
 	public static void printHangman() {
-		if (incorrectCount > 0) {
+		if (incorrectCount > 0 && incorrectCount < 7) {
 			System.out.println("Wrong guess, try again!");
 		}
 
 		switch (incorrectCount) {
 			case 0:
-				System.out.println("┏━━┓\n┃\n┃  \n┃   \n┃   \n┻━━━━━");
+				System.out.println("/--\\\n|\n|  \n|   \n|   \n+-----");
 				break;
 			case 1:
-				System.out.println("┏━━┓\n┃  o\n┃  \n┃   \n┃   \n┻━━━━━");
+				System.out.println("/--\\\n|  o\n|  \n|   \n|   \n+-----");
 				break;
 			case 2:
-				System.out.println("┏━━┓\n┃  o\n┃  +\n┃   \n┃   \n┻━━━━━");
+				System.out.println("/--\\\n|  o\n|  +\n|   \n|   \n+-----");
 				break;
 			case 3:
-				System.out.println("┏━━┓\n┃  o\n┃ -+\n┃   \n┃   \n┻━━━━━");
+				System.out.println("/--\\\n|  o\n| -+\n|   \n|   \n+-----");
 				break;
 			case 4:
-				System.out.println("┏━━┓\n┃  o\n┃ -+-\n┃   \n┃   \n┻━━━━━");
+				System.out.println("/--\\\n|  o\n| -+-\n|   \n|   \n+-----");
 				break;
 			case 5:
-				System.out.println("┏━━┓\n┃  o\n┃ -+-\n┃  |\n┃   \n┻━━━━━");
+				System.out.println("/--\\\n|  o\n| -+-\n|  |\n|   \n+-----");
 				break;
 			case 6:
-				System.out.println("┏━━┓\n┃  o\n┃ -+-\n┃  |\n┃  ^\n┻━━━━━");
+				System.out.println("/--\\\n|  o\n| -+-\n|  |\n|  ^\n+-----");
 				break;
 			case 7:
-				System.out.println("┏━━┓\n┃  o\n┃ -+-\n┃  |\n┃  ^\n┻━   ━");
+				System.out.println("Ran out of guesses!  The correct word was: " + word);
+				System.out.println("/--\\\n|  o\n| -+-\n|  |\n|  ^\n+-   -");
 				break;
 		
 			default:
