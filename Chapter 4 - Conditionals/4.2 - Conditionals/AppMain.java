@@ -11,15 +11,15 @@ public class AppMain {
 
         System.out.println("------ compareDouble -------");
         // add your test cases here
-        assert Conditionals.compareDouble(6.001, 6) == true;
-        assert Conditionals.compareDouble(6.011, 6) == false;
-        assert Conditionals.compareDouble(-1.1, -1) == false;
+        System.out.println("(6.001, 6 -> true) " + (Conditionals.compareDouble(6.001, 6) == true));
+        System.out.println("(6.011, 6 -> false) " + (Conditionals.compareDouble(6.011, 6) == false));
+        System.out.println("(-1.1, -1 -> false) " + (Conditionals.compareDouble(-1.1, -1) == false));
 
         System.out.println("-------- logicCheck --------");
         // add your test cases here
-        assert Conditionals.logicCheck(15, 20, false) == true;
-        assert Conditionals.logicCheck(9, 7, true) == true;
-        assert Conditionals.logicCheck(10, 20, false) == false;
-        assert Conditionals.logicCheck(5, 20, true) == false;
+        System.out.println("(15, 20, false -> true) " + (Conditionals.logicCheck(15, 20, false) == true));
+        System.out.println("(9, 7, true -> true) " + (Conditionals.logicCheck(9, 7, true) == true));
+        System.out.println("(10, 20, false -> false) " + (Conditionals.logicCheck(10, 20, false) == false));
+        System.out.println("(5, 20, true -> false) " + (Conditionals.logicCheck(5, 20, true) == false));
     }
 }
