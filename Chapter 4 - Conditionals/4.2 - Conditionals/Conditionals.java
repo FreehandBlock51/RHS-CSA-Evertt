@@ -10,7 +10,7 @@ public class Conditionals {
         //  minThreeStars("***abc") -> true
         //  minThreeStars("**a*") -> false
 
-        return text.length() > 0 && String.join(text, "***").startsWith("***");
+        return text.length() > 0 && String.join("", text, "***").startsWith("***");
     }
 
     public static boolean compareDouble(double number, double expected) {
