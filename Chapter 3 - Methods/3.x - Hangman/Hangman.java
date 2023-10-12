@@ -2,7 +2,7 @@ import java.util.Scanner;
 
 public class Hangman {
 
-	private static String[] words = {"hangman", "banana", "computer", "dog", "rain", "water", "terminal", "midnight", "redmond", "science", "cat" };
+	private static final String[] words = {"hangman", "banana", "computer", "dog", "rain", "water", "terminal", "midnight", "redmond", "science", "cat" };
 	private static String word;
 	private static String hiddenLetters;
 	private static int incorrectCount = 0;
