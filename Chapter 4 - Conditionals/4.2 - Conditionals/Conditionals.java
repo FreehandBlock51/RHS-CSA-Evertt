@@ -10,9 +10,7 @@ public class Conditionals {
         //  minThreeStars("***abc") -> true
         //  minThreeStars("**a*") -> false
 
-        if (text)
-
-        return false;
+        return text.length() > 0 && String.join(text, "***").startsWith("***");
     }
 
     public boolean compareDouble(double number, double expected) {
@@ -24,7 +22,7 @@ public class Conditionals {
         //  compareDouble(6.001, 6) -> true
         //  compareDouble(6.011, 6) -> false
         //  compareDouble(-1.1, -1) -> false
-        return false;
+        return number - expected <= AppMain.EPSILON;
     }
 
     public boolean logicCheck(int x, int y, boolean b) {
@@ -37,6 +35,6 @@ public class Conditionals {
         } else if (x > y) {
             return b;
         }
-        return false;
+        return x > 10 || (x > y && b);
     }
 }
