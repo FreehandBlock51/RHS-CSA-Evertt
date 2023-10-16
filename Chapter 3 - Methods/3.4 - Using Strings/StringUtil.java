@@ -20,7 +20,7 @@ public class StringUtil {
         // Requirements...
         //  - Use the string function substring.
 
-        return input.substring(0, input.indexOf(" "));
+        return input.substring(0, Math.max(input.indexOf(" "), 0));
     }
 
     public static String afterSpace(String input) {
@@ -31,7 +31,9 @@ public class StringUtil {
         // Requirements...
         //  - Use the string function substring.
 
-        return input.substring(input.indexOf(" ") + 1);
+        final int spaceIdx = input.indexOf(" ");
+
+        return spaceIdx < 0 ? "" : input.substring(spaceIdx + 1);
     }
 
     public static String swapAtSpace(String input) {
@@ -44,21 +46,19 @@ public class StringUtil {
         return afterSpace(input) + ' ' + beforeSpace(input);
     }
 
-    public static char firstNonRepeatedChar(String input) throws StringIndexOutOfBoundsException {
+    public static char firstNonRepeatedChar(String input) {
         // Returns the first character that is not repeated later in the string (looking left to right)
         //  Example: "abcabcdef" -> 'd'
 
         ArrayList<String> repeatedChars = new ArrayList<>();
+
+        String s = input.substring(0, 1);
         
-        for (int i = 0; i < input.length(); i++) {
-            String s = input.substring(i, i + 1);
-            
-            if (!input.substring(i + 1).contains(s) && !repeatedChars.contains(s)) {
-                return s.charAt(0);
-            }
+        for (int i = 1; (!input.substring(i + 1).contains(s) && !repeatedChars.contains(s)) || i < input.length(); i++) {
+            s = input.substring(i, i + 1);
             repeatedChars.add(s);
         }
 
-        throw new StringIndexOutOfBoundsException();
+        return s.charAt(0);
     }
 }
