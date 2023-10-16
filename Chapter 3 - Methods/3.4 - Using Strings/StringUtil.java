@@ -1,3 +1,5 @@
+import java.util.ArrayList;
+
 public class StringUtil {
     public static String firstHalf(String input) {
         // Returns a string containing the first half of 'input'
@@ -7,7 +9,7 @@ public class StringUtil {
         // Requirements...
         //  - Use a loop to build the return string.
 
-        return input;
+        return input.substring(0, (input.length() - 1) / 2);
     }
 
     public static String beforeSpace(String input) {
@@ -18,7 +20,7 @@ public class StringUtil {
         // Requirements...
         //  - Use the string function substring.
 
-        return input;
+        return input.substring(0, input.indexOf(" "));
     }
 
     public static String afterSpace(String input) {
@@ -29,7 +31,7 @@ public class StringUtil {
         // Requirements...
         //  - Use the string function substring.
 
-        return input;
+        return input.substring(input.indexOf(" ") + 1);
     }
 
     public static String swapAtSpace(String input) {
@@ -39,13 +41,24 @@ public class StringUtil {
         // Requirements...
         //  - The other functions you created for this.
 
-        return input;
+        return afterSpace(input) + ' ' + beforeSpace(input);
     }
 
-    public static char firstNonRepeatedChar(String input) {
+    public static char firstNonRepeatedChar(String input) throws StringIndexOutOfBoundsException {
         // Returns the first character that is not repeated later in the string (looking left to right)
         //  Example: "abcabcdef" -> 'd'
 
-        return input.charAt(0);
+        ArrayList<String> repeatedChars = new ArrayList<>();
+        
+        for (int i = 0; i < input.length(); i++) {
+            String s = input.substring(i, i + 1);
+            
+            if (!input.substring(i + 1).contains(s) && !repeatedChars.contains(s)) {
+                return s.charAt(0);
+            }
+            repeatedChars.add(s);
+        }
+
+        throw new StringIndexOutOfBoundsException();
     }
 }
