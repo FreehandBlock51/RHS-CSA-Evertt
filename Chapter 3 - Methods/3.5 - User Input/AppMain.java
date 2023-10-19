@@ -14,11 +14,12 @@ public class AppMain {
             System.out.print("What is your current age? ");
             int curAge = scanner.nextInt();
 
+            System.out.print("What is the current year? ");
+            int curYear = scanner.nextInt();
+
             System.out.print("What year are you trying to calculate your age at? ");
             int targetYear = scanner.nextInt();
 
-            Calendar cal = Calendar.getInstance();
-            int curYear = cal.get(Calendar.YEAR);
             int yearsUntilTarget = targetYear - curYear;
 
             int targetAge = curAge + yearsUntilTarget;
