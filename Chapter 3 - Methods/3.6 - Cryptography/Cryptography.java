@@ -25,7 +25,16 @@ public class Cryptography {
          */
 
         // your code here:
-        return "";
+        StringBuilder builder = new StringBuilder(ALPHABET);
+        for (int i = 0; i < builder.length(); i++) {
+            char curLetter = builder.charAt(i);
+            curLetter += n; // shift character n times to the right
+            if (curLetter > 'z') {
+                curLetter -= 'z' - 'a';
+            }
+            builder.setCharAt(i, curLetter);
+        }
+        return builder.toString();
     }
 
     public static char encryptChar(String cypher, char c) {
@@ -48,10 +57,13 @@ public class Cryptography {
          */
         
         // your code here:
-        return ' ';
+        if (!Character.isAlphabetic(c)) { return c; } // if c isn't a letter, don't encrypt it
+        char decryptedChar = Character.toLowerCase(c);
+        char encryptedChar = cypher.charAt(decryptedChar - 'a');
+        return c == decryptedChar ? encryptedChar : Character.toUpperCase(encryptedChar); // if c != decryptedChar, c must be uppercase, so return an uppercase letter
     }
 
-    public static String encryptString(String cypher, String input) {
+    public static String encryptString(String cypher, String input) throws IndexOutOfBoundsException {
         /*
          * --------------
          * encryptString 
@@ -67,7 +79,11 @@ public class Cryptography {
          */
 
         // your code here:
-        return "";
+        StringBuilder builder = new StringBuilder(input);
+        for (int i = 0; i < builder.length(); i++) {
+            builder.setCharAt(i, encryptChar(cypher, builder.charAt(i)));
+        }
+        return builder.toString();
     }
 
     public static char decryptChar(String cypher, char c) {
@@ -90,7 +106,10 @@ public class Cryptography {
          */
         
         // your code here:
-        return ' ';
+        if (!Character.isAlphabetic(c)) { return c; } // if c isn't a letter, don't decrypt it
+        char encryptedChar = Character.toLowerCase(c);
+        char decryptedChar = (char)('a' + cypher.indexOf(encryptedChar));
+        return c == encryptedChar ? decryptedChar : Character.toUpperCase(decryptedChar); // if c != encryptedChar, c must be uppercase, so return an uppercase letter
     }
 
     public static String decryptString(String cypher, String input) {
@@ -109,7 +128,11 @@ public class Cryptography {
          */
         
         // your code here:
-        return "";
+        StringBuilder builder = new StringBuilder(input);
+        for (int i = 0; i < builder.length(); i++) {
+            builder.setCharAt(i, decryptChar(cypher, builder.charAt(i)));
+        }
+        return builder.toString();
     }
 
 
