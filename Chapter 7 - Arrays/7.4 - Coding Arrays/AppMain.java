@@ -47,13 +47,22 @@ public class AppMain {
         //Duck[] ducks = { new MotherDuck(), new Duck(), new Duck(), new Duck(), new Duck(), new Duck(), new Duck(), null, null, null, null, null };
         //Duck[] ducks = { new Duck(), new Duck(), null, null, null, null, null, null, null, null, new MotherDuck(), new Duck() };
 
-        // TODO
+        for (int i = 0; i < UPDATE_LOOPS; i++) {
+            System.out.println(renderDucksToString(ducks));
+            updateDucks(ducks);
+        }
     }
 
     // Shifts all ducks to the left by one.
     //  It wraps around to right side when leaving left side.
     public static void updateDucks(Duck[] ducks) {
-        // TODO
+        Duck prevDuck = ducks[0], curDuck;
+
+        for (int i = ducks.length - 1; i >= 0; i--) {
+            curDuck = ducks[i];
+            ducks[i] = prevDuck;
+            prevDuck = curDuck;
+        }
     }
 
     // Draw the ducks from left to right (BTW - Render is just another way of saying draw).
@@ -63,6 +72,10 @@ public class AppMain {
     //  *** Requirement: This function must use a for each loop ***
     //
     public static String renderDucksToString(Duck[] ducks) {
-        // TODO
+        StringBuilder builder = new StringBuilder();
+        for (Duck duck : ducks) {
+            builder.append(duck != null ? duck : ' ');
+        }
+        return builder.toString();
     }
 }
