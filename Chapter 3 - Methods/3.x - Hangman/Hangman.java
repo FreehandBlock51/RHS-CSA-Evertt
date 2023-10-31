@@ -100,6 +100,10 @@ public class Hangman {
 	// Modify this function to get the word to guess from user input in the terminal
 	public static void getWord() {
 		word = new String(System.console().readPassword("Enter the word: "));
+		if (!word.matches("[a-z]+")) {
+			System.err.println("word must be a single world with only lowercase letters!");
+			getWord();
+		}
 		hiddenLetters = new String(new char[word.length()]).replace("\0", "*");
 	}
 }
