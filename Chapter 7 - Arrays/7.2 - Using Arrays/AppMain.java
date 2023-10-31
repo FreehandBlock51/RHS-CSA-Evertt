@@ -22,16 +22,23 @@ public class AppMain {
     // Example: { 1, 2, 3, 4 } -> 1, 2, 3, 4
     // Example: { -1, 5, 0 } -> -1, 5, 0
     public static String arrayToString(int[] array) {
-        // ...
-        return "<TODO>";
+        StringBuilder builder = new StringBuilder();
+        for (int i : array) {
+            builder.append(i + ", ");
+        }
+        builder.deleteCharAt(builder.length() - 1);
+        return builder.toString();
     }
 
     // Create an int array of size elementCount. 
     //  Every element should be initialized with the value of defaultValue.
     // Example: createIntArray(5, 2) -> { 2, 2, 2, 2, 2 }
     public static int[] createIntArray(int elementCount, int defaultValue) {
-        // ...
-        return new int[] { };
+        int[] array = new int[elementCount];
+        for (int i = 0; i < elementCount; i++) {
+            array[i] = defaultValue;
+        }
+        return array;
     }
 
     // Count the number of matching adjacent pairs there are in list.
@@ -39,7 +46,12 @@ public class AppMain {
     // Example: { 5, 5, 5, 2, 3, 3, 5, 7 } -> 3
     // Example: { 5, 5, 5 } -> 2
     public static int countAdjacentMatches(int[] list) {
-        // ...
-        return -1;
+        int matches = 0;
+        for (int i = 0; i < list.length - 1; i++) {
+            if (list[i] == list[i + 1]) {
+                matches++;
+            }
+        }
+        return matches;
     }
 }
