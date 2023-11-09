@@ -43,8 +43,12 @@ public final class TankAI extends TankAIBase {
     //  teacher if you are not sure. If it feels like cheating, it probably is.
 
     public boolean updateAI() {
-        if (!areVec2sEqual(tank.getVel(), Vec2.zero()) || Math.abs(tank.getAngVel()) >= EPSILON) {
+        if (getTank().hasCommand()) {
             return false; // don't calculate movement if we are still moving
+        }
+        
+        if (getOther().getPos().distance(getTankPos()) < getTankShotRange()) {
+            tryQueueCmd(FIRECMD_TYPE, getOther().getPos().subtract(getTankPos()));
         }
         
         Pair<PowerUp, Integer> cheapestPowerUp = new Pair<>(null, Integer.MIN_VALUE);
