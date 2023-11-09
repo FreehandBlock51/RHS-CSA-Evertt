@@ -30,7 +30,7 @@ public final class TankAI extends TankAIBase {
     static final int QUEUECMD_POINTS_LOST = 1;
 
     public String getPlayerName() {
-        return "Dalton Carter";  // <---- Put your first name here
+        return "Dalton";  // <---- Put your first name here
     }
     public int getPlayerPeriod() {
         return 1;
@@ -99,6 +99,10 @@ public final class TankAI extends TankAIBase {
             case MOVECMD_TYPE:
                 if (areVec2sEqual(param, Vec2.zero())) {
                     return true; // no movement necessary
+                }
+                if (param.x != 0 && param.y != 0) {
+                    return tryQueueCmd(MOVECMD_TYPE, new Vec2(param.x, 0)) ||
+                           tryQueueCmd(MOVECMD_TYPE, new Vec2(0, param.y));
                 }
                 break;
             case TURNCMD_TYPE:
