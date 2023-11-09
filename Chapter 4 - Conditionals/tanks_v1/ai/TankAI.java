@@ -3,6 +3,7 @@ package ai;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import game.Game;
 import game.PowerUp;
 import game.TankAIBase;
 import game.Vec2;
@@ -24,13 +25,14 @@ public final class TankAI extends TankAIBase {
     private static final String SPEED_POWERUP_TYPE = "S";
 
     private int getPointsPowerupBenifit() {
-        return 25;
+        return Game.POINTS_POWERUP_PTS;
     }
     private int getRangePowerupBenifit() {
-        return 0;
+        return Game.POINTS_POWERUP_RANGE;
     }
+    private static final double DESIRED_SPEED = 3;
     private int getSpeedPowerupBenifit() {
-        return 10;
+        return getTankMoveSpeed() < DESIRED_SPEED ? Game.POINTS_POWERUP_SPEED : Game.POINTS_POWERUP_SPEED / 2;
     }
 
     public String getPlayerName() {
@@ -38,6 +40,12 @@ public final class TankAI extends TankAIBase {
     }
     public int getPlayerPeriod() {
         return 1;
+    }
+
+    public final int playerIdx;
+
+    public TankAI() {
+        playerIdx = 0; // TODO actually set playerIdx
     }
         
     // You are free to add member variables & methods to this class (and delete this comment).
