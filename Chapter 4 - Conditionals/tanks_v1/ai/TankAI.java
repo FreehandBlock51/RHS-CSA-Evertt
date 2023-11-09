@@ -47,7 +47,7 @@ public final class TankAI extends TankAIBase {
             return false; // don't calculate movement if we are still moving
         }
         
-        if (getOther().getPos().distance(getTankPos()) < getTankShotRange()) {
+        if (getOther() != null && getOther().getPos().distance(getTankPos()) < getTankShotRange()) {
             tryQueueCmd(FIRECMD_TYPE, getOther().getPos().subtract(getTankPos()));
         }
         
