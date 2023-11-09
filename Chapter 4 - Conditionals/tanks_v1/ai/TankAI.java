@@ -9,25 +9,29 @@ import game.Vec2;
 import javafx.util.Pair;
 
 public final class TankAI extends TankAIBase {
-    static final double EPSILON = 0.1;
-    static boolean areVec2sEqual(Vec2 one, Vec2 other) {
+    private static final double EPSILON = 0.1;
+    private static boolean areVec2sEqual(Vec2 one, Vec2 other) {
         Vec2 difference = one.subtract(other);
         return Math.abs(difference.x) < EPSILON && Math.abs(difference.y) < EPSILON;
     }
 
-    static final String MOVECMD_TYPE = "move";
-    static final String TURNCMD_TYPE = "turn";
-    static final String FIRECMD_TYPE = "shoot";
+    private static final String MOVECMD_TYPE = "move";
+    private static final String TURNCMD_TYPE = "turn";
+    private static final String FIRECMD_TYPE = "shoot";
 
-    static final String POINTS_POWERUP_TYPE = "P";
-    static final String RANGE_POWERUP_TYPE = "R";
-    static final String SPEED_POWERUP_TYPE = "S";
+    private static final String POINTS_POWERUP_TYPE = "P";
+    private static final String RANGE_POWERUP_TYPE = "R";
+    private static final String SPEED_POWERUP_TYPE = "S";
 
-    static final int POINTS_POWERUP_BENIFIT = 25;
-    static final int RANGE_POWERUP_BENIFIT = 0;
-    static final int SPEED_POWERUP_BENIFIT = 10;
-
-    static final int QUEUECMD_POINTS_LOST = 1;
+    private int getPointsPowerupBenifit() {
+        return 25;
+    }
+    private int getRangePowerupBenifit() {
+        return 0;
+    }
+    private int getSpeedPowerupBenifit() {
+        return 10;
+    }
 
     public String getPlayerName() {
         return "Dalton";  // <---- Put your first name here
@@ -57,13 +61,13 @@ public final class TankAI extends TankAIBase {
             int benifit; // how good is the powerup?
             switch (powerUp.getType()) {
                 case POINTS_POWERUP_TYPE:
-                    benifit = POINTS_POWERUP_BENIFIT;
+                    benifit = getPointsPowerupBenifit();
                     break;
                 case SPEED_POWERUP_TYPE:
-                    benifit = SPEED_POWERUP_BENIFIT;
+                    benifit = getSpeedPowerupBenifit();
                     break;
                 case RANGE_POWERUP_TYPE:
-                    benifit = RANGE_POWERUP_BENIFIT;
+                    benifit = getRangePowerupBenifit();
                     break;
             
                 default:
