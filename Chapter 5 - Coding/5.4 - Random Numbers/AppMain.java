@@ -10,5 +10,18 @@ public class AppMain {
 
     private static final int ROLLCOUNT = 100;
 
-    // Your code goes here...
+    private static final int[] DICE = new int[] {4, 6, 8, 10, 12, 20};
+
+    public static void main(String[] args) {
+        int die = DICE[(int)Math.floor(Math.min(Math.random(), 0.9) * DICE.length)];
+        long sum = 0;
+        System.err.println("Rolling a d" + die + " " + ROLLCOUNT + " times...");
+        for (int i = 1; i <= ROLLCOUNT; i++) {
+            long roll = (long)Math.ceil(Math.random() * die);
+            System.err.println("Roll " + i + ": " + roll);
+            sum += roll;
+        }
+        long average = sum / ROLLCOUNT;
+        System.out.println("Average of " + ROLLCOUNT + " rolls of a d" + die + ": " + average);
+    }
 }
