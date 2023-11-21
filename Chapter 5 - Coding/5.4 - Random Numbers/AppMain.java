@@ -1,3 +1,5 @@
+import java.util.Arrays;
+
 public class AppMain {
     // The program should...
     //  Uses at least two functions.
@@ -13,15 +15,31 @@ public class AppMain {
     private static final int[] DICE = new int[] {4, 6, 8, 10, 12, 20};
 
     public static void main(String[] args) {
-        int die = DICE[(int)Math.floor(Math.random() * DICE.length)]; // this doesn't fail because Math.random() has a range of [0,1)
-        long sum = 0;
-        System.err.println("Rolling a d" + die + " " + ROLLCOUNT + " times...");
+        final boolean DEBUG = Arrays.asList(args).contains("--debug");
+
+        int die = pickRandomDie();
+        double sum = 0;
+        logDebug(DEBUG, "Rolling a d" + die + " " + ROLLCOUNT + " times...");
         for (int i = 1; i <= ROLLCOUNT; i++) {
-            long roll = (long)Math.ceil(Math.random() * die);
-            System.err.println("Roll " + i + ": " + roll);
+            long roll = roll(die);
+            logDebug(DEBUG, "Roll " + i + ": " + roll);
             sum += roll;
         }
-        long average = sum / ROLLCOUNT;
-        System.out.println("Average of " + ROLLCOUNT + " rolls of a d" + die + ": " + average);
+        double average = sum / ROLLCOUNT;
+        System.out.println("Die: d" + die + "\nAverage = " + average);
+    }
+
+    private static long roll(int die) {
+        return (long)Math.ceil(Math.random() * die);
+    }
+
+    private static int pickRandomDie() {
+        return DICE[(int)Math.floor(Math.random() * DICE.length)]; // this doesn't fail because Math.random() has a range of [0,1)
+    }
+
+    private static void logDebug(boolean debug, String msg) {
+        if (debug) {
+            System.err.println(msg);
+        }
     }
 }
