@@ -13,7 +13,7 @@ public class AppMain {
     private static final int[] DICE = new int[] {4, 6, 8, 10, 12, 20};
 
     public static void main(String[] args) {
-        int die = DICE[(int)Math.floor(Math.min(Math.random(), 0.9) * DICE.length)];
+        int die = DICE[(int)Math.floor(Math.random() * DICE.length)]; // this doesn't fail because Math.random() has a range of [0,1)
         long sum = 0;
         System.err.println("Rolling a d" + die + " " + ROLLCOUNT + " times...");
         for (int i = 1; i <= ROLLCOUNT; i++) {
