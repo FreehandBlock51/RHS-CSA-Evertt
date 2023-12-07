@@ -22,4 +22,15 @@ public class AppMain {
     //  Series Sum (5 terms): 25
 
     // Your code goes here...
+    public static void main(String[] args) {
+        ArethmaticSequence seq = new ArethmaticSequence(0, 3);
+        ArethmaticSeries ser = new ArethmaticSeries(0, 7);
+        FibonnaciSequence fib = new FibonnaciSequence();
+        System.out.println("seq: " + seq);
+        System.out.println("ser: " + ser);
+        System.out.println("fib: " + fib);
+        for (int i = 0; i < 100; i++) {
+            System.out.println(i + ": " + fib.getTermAt(i));
+        }
+    }
 }
