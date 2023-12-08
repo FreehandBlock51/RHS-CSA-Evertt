@@ -30,5 +30,23 @@ public class AppMain {
      *     lineB.printIntercept(lineC);
      */
 
-     // TODO
+    public static void main(String[] args) {
+        Line lineA = new Line(2, 5);
+        Line lineB = new Line(-0.5, -10);
+        Line lineC = new Line(0, 1, 10, -5);
+        System.out.print("A & B: ");
+        lineA.printIntercept(lineB);
+        System.out.print("\nA & C: ");
+        lineA.printIntercept(lineC);
+        System.out.print("\nB & C: ");
+        lineB.printIntercept(lineC);
+
+        final Line parallelLine1 = new Line(3, 0),
+                   parallelLine2 = new Line(3, 5);
+        System.out.print("\nParallel lines have an intercept at: ");
+        parallelLine1.printIntercept(parallelLine2);
+
+        System.out.print("\nCoincident lines have an intercept at: ");
+        lineA.printIntercept(lineA);
+    }
 }
