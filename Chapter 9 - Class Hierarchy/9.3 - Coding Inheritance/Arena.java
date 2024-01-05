@@ -6,6 +6,24 @@ public class Arena {
         creaturesRemaining = CREATURE_COUNT;
     }
 
+    private static Creature makeCreature(String name) {
+        switch (name) {
+            case "Fluffletuft":
+            case "Fuzzlenook":
+            case "Quillfluff":
+                return new StrongCreature(name);
+            case "Shagglewisp":
+            case "Puffernip":
+            case "Snugglewight":
+                return new FastCreature(name);
+            case "Whiskerwhisp":
+            case "Tanglethorn":
+                return new AccurateCreature(name);
+            default:
+                throw new UnsupportedOperationException();
+        }
+    }
+
     private Creature nextCreature() {
         // Decrease our number remaining...
         int creatureIndex = creaturesRemaining;
@@ -13,7 +31,25 @@ public class Arena {
 
         /*  Create each requested create. Use creatureIndex and the list specified
                in AppMain's app description to determine which one to create/return. */
-        // TODO
+
+        switch (creatureIndex) {
+            case 8:
+                return makeCreature("Fluffletuft");
+            case 7:
+                return makeCreature("Whiskerwhisp");
+            case 6:
+                return makeCreature("Fuzzlenook");
+            case 5:
+                return makeCreature("Shagglewisp");
+            case 4:
+                return makeCreature("Puffernip");
+            case 3:
+                return makeCreature("Tanglethorn");
+            case 2:
+                return makeCreature("Quillfluff");
+            case 1:
+                return makeCreature("Snugglewight");
+        }
         
         return null;
     }
