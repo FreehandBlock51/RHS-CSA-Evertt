@@ -1,3 +1,5 @@
+import java.util.Arrays;
+
 public final class Board {
     private final String[][] board = new String[3][3];
 
@@ -41,26 +43,121 @@ public final class Board {
     }
 
     public int calcWinner() {
-        for (int i = 0; i < board.length; i++) {
-            if (board[i][0].equals(board[i][1]) && board[i][1].equals(board[i][2]) 
-                 && !board[i][0].equals("")) { // rows
-                
+        switch (getGameResult()) {
+            case X_WINS:
+                return 1;
+            case O_WINS:
+                return 2;
+            case NO_WINNER:
+            default:
+                return 0;
+        }
+    }
+
+    private GameResult getGameResult() {
+        if (isGameInProgress()) {
+            return GameResult.NO_WINNER;
+        }
+        GameResult result;
+
+        result = getWinnerInRows();
+        if (result != GameResult.NO_WINNER) {
+            return result;
+        }
+
+        result = getWinnerInColumns();
+        if (result != GameResult.NO_WINNER) {
+            return result;
+        }
+
+        return getWinnerInDiagionals();
+    }
+
+    private boolean isGameInProgress() {
+        for (String[] row : board) {
+            for (String cell : row) {
+                if (cell.isEmpty()) {
+                    return true;
+                }
             }
-            if (board[0][i].equals(board[1][i]) && board[1][i].equals(board[2][i]) 
-                 && !board[0][i].equals("")) { // columns
-                return board[0][i].equals(playerX.mark) ? 1 : 2;
+        }
+        return false;
+    }
+
+    private GameResult getWinnerFromMark(String mark) {
+        if (mark.equals(playerX.mark)) {
+            return GameResult.X_WINS;
+        }
+        if (mark.equals(playerO.mark)) {
+            return GameResult.O_WINS;
+        }
+        return GameResult.NO_WINNER;
+    }
+
+    private GameResult getWinnerInRows() {
+        for (String[] row : board) {
+            if (Arrays.stream(row).distinct().count() == 1) {
+                final String winningCell = row[0];
+                final GameResult result = getWinnerFromMark(winningCell);
+                if (result != GameResult.NO_WINNER) {
+                    return result;
+                }
+            }
+        }
+        return GameResult.NO_WINNER;
+    }
+
+    private GameResult getWinnerInColumns() {
+        column_loop:
+        for (int c = 0; c < board[0].length; c++) {
+            final String cellContents = board[0][c];
+            for (int r = 1; r < board.length; r++) {
+                if (!cellContents.equals(cellContents)) {
+                    continue column_loop;
+                }
+            }
+            final GameResult result = getWinnerFromMark(cellContents);
+            if (result != GameResult.NO_WINNER) {
+                return result;
+            }
+        }
+        return GameResult.NO_WINNER;
+    }
+
+    private GameResult getWinnerInDiagionals() {
+        final int FAR_RIGHT_INDEX = board[0].length - 1;
+
+        final String topLeft = board[0][0];
+        boolean checkTopLeft = true;
+        final String topRight = board[0][FAR_RIGHT_INDEX];
+        boolean checkTopRight = true;
+        for (int i = 1; i <= FAR_RIGHT_INDEX; i++) {
+            if (!(checkTopLeft && checkTopRight)) {
+                break;
+            }
+
+            if (checkTopLeft && !board[i][i].equals(topLeft)) {
+                checkTopLeft = false;
+            }
+            if (checkTopRight && !board[i][FAR_RIGHT_INDEX - i].equals(topRight)) {
+                checkTopRight = false;
             }
         }
 
-        if (board[1][1].equals("")) {
-            return 0;
+        if (checkTopLeft) {
+            return getWinnerFromMark(topLeft);
         }
-
-        if ((board[0][0].equals(board[1][1]) && board[1][1].equals(board[2][2])) ||
-             (board[0][2].equals(board[1][1]) && board[1][1].equals(board[2][0]))) { // diagonals
-            return board[1][1].equals(playerX.mark) ? 1 : 2;
+        else if (checkTopRight) {
+            return getWinnerFromMark(topRight);
         }
+        else {
+            return GameResult.NO_WINNER;
+        }
+    }
 
-        return 0;
+    private enum GameResult {
+        NO_WINNER,
+        X_WINS,
+        O_WINS,
     }
 }
