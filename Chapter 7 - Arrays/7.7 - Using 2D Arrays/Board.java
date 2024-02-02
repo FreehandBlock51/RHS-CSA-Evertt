@@ -55,9 +55,6 @@ public final class Board {
     }
 
     private GameResult getGameResult() {
-        if (isGameInProgress()) {
-            return GameResult.NO_WINNER;
-        }
         GameResult result;
 
         result = getWinnerInRows();
