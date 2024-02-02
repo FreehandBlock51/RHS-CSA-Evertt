@@ -73,7 +73,7 @@ public final class Board {
         return getWinnerInDiagionals();
     }
 
-    private boolean isGameInProgress() {
+    public boolean isGameInProgress() {
         for (String[] row : board) {
             for (String cell : row) {
                 if (cell.isEmpty()) {
