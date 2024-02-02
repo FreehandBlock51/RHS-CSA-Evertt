@@ -10,7 +10,7 @@ public final class HumanPlayer extends Player {
 
     @Override
     protected Move getNextMovePosition(Board board) {
-        System.out.print("Enter next move position [x,y]: ");
+        System.out.print("Your move (e.g. '0,2')? ");
         String[] posStrs = scanner.nextLine().split(",");
         int x = Integer.parseInt(posStrs[0]);
         int y = Integer.parseInt(posStrs[1]);
