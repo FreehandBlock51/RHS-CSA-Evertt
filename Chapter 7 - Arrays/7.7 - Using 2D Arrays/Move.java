@@ -6,6 +6,9 @@ public class Move {
     public Move() {
         this(0, 0, " ");
     }
+    public Move(int r, int c) {
+        this(r, c, "");
+    }
     public Move(int r, int c, String mark) {
         this.r = r;
         this.c = c;

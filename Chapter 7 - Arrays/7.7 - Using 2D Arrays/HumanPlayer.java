@@ -14,7 +14,7 @@ public final class HumanPlayer extends Player {
         String[] posStrs = scanner.nextLine().split(",");
         int x = Integer.parseInt(posStrs[0]);
         int y = Integer.parseInt(posStrs[1]);
-        return new Move(x, y, mark);
+        return new Move(x, y);
     }
     
     @Override
