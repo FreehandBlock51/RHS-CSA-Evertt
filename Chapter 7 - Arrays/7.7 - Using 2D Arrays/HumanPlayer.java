@@ -19,6 +19,8 @@ public final class HumanPlayer extends Player {
     
     @Override
     protected void finalize() {
-        scanner.close();
+        final Scanner s = scanner;
+        if (s != null)
+            s.close();
     }
 }
