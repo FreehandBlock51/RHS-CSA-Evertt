@@ -1,6 +1,6 @@
 import java.util.Arrays;
 
-public final class Board {
+public final class Board implements Cloneable {
     public static final int BOARD_SIZE = 3;
 
     private final String[][] board = new String[BOARD_SIZE][BOARD_SIZE];
@@ -15,6 +15,21 @@ public final class Board {
         this.playerO = playerO;
         isPlayerXTurn = true;
         clearBoard();
+    }
+
+    private Board(Board other) {
+        this.playerX = other.playerX;
+        this.playerO = other.playerO;
+        for (int r = 0; r < board.length; r++) {
+            for (int c = 0; c < board[r].length; c++) {
+                board[r][c] = other.getMarkAtCell(r, c);
+            }
+        }
+    }
+
+    @Override
+    public Board clone() {
+        return new Board(this);
     }
 
     private void clearBoard() {
