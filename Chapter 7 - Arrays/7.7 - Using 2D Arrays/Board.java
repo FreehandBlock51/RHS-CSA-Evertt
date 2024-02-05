@@ -1,22 +1,51 @@
 import java.util.Arrays;
 
 public final class Board {
-    private final String[][] board = new String[3][3];
+    public static final int BOARD_SIZE = 3;
+
+    private final String[][] board = new String[BOARD_SIZE][BOARD_SIZE];
 
     private final Player playerX;
     private final Player playerO;
 
+    private boolean isPlayerXTurn;
+
     public Board(Player playerX, Player playerO) {
         this.playerX = playerX;
         this.playerO = playerO;
+        isPlayerXTurn = true;
+        clearBoard();
+    }
+
+    private void clearBoard() {
+        for (int r = 0; r < board.length; r++) {
+            for (int c = 0; c < board[r].length; c++) {
+                board[r][c] = "";
+            }
+        }
+    }
+
+    public void doNextTurn() {
+        final Move move;
+        if (isPlayerXTurn) {
+            move = playerX.getNextMove(this);
+        }
+        else {
+            move = playerO.getNextMove(this);
+        }
+        placeMark(move);
+        isPlayerXTurn = !isPlayerXTurn;
     }
 
     public String getMarkAtCell(int r, int c) {
+        if (board[r][c] == null) {
+            board[r][c] = "";
+        }
         return board[r][c];
     }
 
-    public void placeMark(Move move) {
-        if (board[move.r][move.c] == "") { // only place marks on empty squares
+    private void placeMark(Move move) {
+        if (board[move.r][move.c] == null || board[move.r][move.c].isEmpty()) { // only place marks on empty squares
             board[move.r][move.c] = move.mark;
         }
     }
@@ -27,10 +56,15 @@ public final class Board {
         for (int r = 0; r < board.length; r++) {
             row = board[r];
             rowString = "";
+            String mark;
             for (int c = 0; c < row.length - 1; c++) {
-                rowString += " " + row[c] + " |";
+                mark = row[c].isEmpty() ? " " : row[c];
+                rowString += " " + mark + " |";
             }
             rowString += " " + row[row.length - 1] + " ";
+            if (row[row.length - 1].isEmpty()) {
+                rowString += " ";
+            }
             System.out.println(rowString);
 
             if (r + 1 >= board.length) { return; }
@@ -73,7 +107,7 @@ public final class Board {
     public boolean isGameInProgress() {
         for (String[] row : board) {
             for (String cell : row) {
-                if (cell.isEmpty()) {
+                if (cell == null || cell.isEmpty()) {
                     return true;
                 }
             }
@@ -82,6 +116,9 @@ public final class Board {
     }
 
     private GameResult getWinnerFromMark(String mark) {
+        if (mark == null) {
+            return GameResult.NO_WINNER; // to prevent null pointer exception
+        }
         if (mark.equals(playerX.mark)) {
             return GameResult.X_WINS;
         }
@@ -108,8 +145,12 @@ public final class Board {
         column_loop:
         for (int c = 0; c < board[0].length; c++) {
             final String cellContents = board[0][c];
+            if (cellContents.isEmpty()) {
+                continue;
+            }
+
             for (int r = 1; r < board.length; r++) {
-                if (!cellContents.equals(cellContents)) {
+                if (!board[r][c].equals(cellContents)) {
                     continue column_loop;
                 }
             }
@@ -129,7 +170,7 @@ public final class Board {
         final String topRight = board[0][FAR_RIGHT_INDEX];
         boolean checkTopRight = true;
         for (int i = 1; i <= FAR_RIGHT_INDEX; i++) {
-            if (!(checkTopLeft && checkTopRight)) {
+            if (!(checkTopLeft || checkTopRight)) {
                 break;
             }
 
