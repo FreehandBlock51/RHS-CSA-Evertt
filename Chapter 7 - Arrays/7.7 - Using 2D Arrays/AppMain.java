@@ -58,6 +58,24 @@ public class AppMain {
     //   You win!!!
 
     public static void main(String[] args) {
-        // TODO
+        final Player human = new HumanPlayer();
+        final Player ai = new AiPlayer();
+        final Board board = new Board(human, ai);
+        
+        while (board.isGameInProgress() && board.calcWinner() == 0) {
+            board.doNextTurn();
+        }
+
+        switch (board.calcWinner()) {
+            case 1:
+                System.out.println("You win!!!");
+                break;
+            case 2:
+                System.out.println("The AI wins!");
+                break;
+            default:
+                System.out.println("It's a tie!");
+                break;
+        }
     }
 }
