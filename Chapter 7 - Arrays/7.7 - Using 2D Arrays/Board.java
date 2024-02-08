@@ -171,13 +171,13 @@ public class Board {
 
     private GameResult getWinnerInColumns() {
         column_loop:
-        for (int c = 0; c < board[0].length; c++) {
+        for (int c = 0; c < columns(); c++) {
             final String cellContents = board[0][c];
             if (cellContents.isEmpty()) {
                 continue;
             }
 
-            for (int r = 1; r < board.length; r++) {
+            for (int r = 1; r < rows(); r++) {
                 if (!board[r][c].equals(cellContents)) {
                     continue column_loop;
                 }
@@ -191,7 +191,7 @@ public class Board {
     }
 
     private GameResult getWinnerInDiagionals() {
-        final int FAR_RIGHT_INDEX = board[0].length - 1;
+        final int FAR_RIGHT_INDEX = columns() - 1;
 
         final String topLeft = board[0][0];
         boolean checkTopLeft = true;
