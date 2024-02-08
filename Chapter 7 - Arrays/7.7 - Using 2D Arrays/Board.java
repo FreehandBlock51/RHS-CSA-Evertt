@@ -59,6 +59,16 @@ public final class Board implements Cloneable {
         return board[r][c];
     }
 
+    public boolean isCellEmpty(int r, int c) {
+        return getMarkAtCell(r, c).isEmpty();
+    }
+
+    public Board withHypotheticalMove(Move move) {
+        Board result = clone();
+        result.placeMark(move);
+        return result;
+    }
+
     private void placeMark(Move move) {
         if (board[move.r][move.c] == null || board[move.r][move.c].isEmpty()) { // only place marks on empty squares
             board[move.r][move.c] = move.mark;
