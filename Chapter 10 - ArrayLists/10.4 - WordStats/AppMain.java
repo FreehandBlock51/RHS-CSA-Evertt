@@ -22,12 +22,15 @@ public class AppMain {
      * 
      * Requirements...
      *  - You must design and build your application to use at least 2 custom classes.
-     *  - You must use an ArrayList as an integral part of your implementation. 
+     *  - You must use an ArrayList as an integral part of your implementation.
      *  - Your code should be well organized and a have good separation of concerns.
      *  - Code quality is an important part of this assignment. 
      *  - Design your classes on paper before moving to coding.
      */
     public static void main(String[] args) {
-        // TODO: Feed in one of the example poems defined above to your analyzer class instance.
+        WordCounts counts = WordCounts.getWordCounts(POEM_A);
+        for (WordCount count : counts.getWordCounts()) {
+            System.out.println(count);
+        }
     }
 }
