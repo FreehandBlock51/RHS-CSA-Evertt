@@ -15,8 +15,13 @@ public class Practice {
         return result;
     }
     public int powR(int b, int e) {
-        // TODO: Replace with recursive implementation
-        return -1;
+        if (e == 0) {
+            return 1;
+        }
+        if (e < 0) {
+            return 1 / powR(b, -e);
+        }
+        return b * powR(b, e - 1);
     }
 
 
@@ -39,10 +44,13 @@ public class Practice {
         return prefix + "*" + postfix;
     }
     public String createStringR(int n) {
-        // TODO: Replace with recursive implementation
-        return "";
+        if (n <= 0) {
+            return "*";
+        }
+        return "[" + createStringR(n - 1) + "]";
     }
 
+    private static final int BITS_IN_AN_INT = 8 * Integer.BYTES;
     
     /* Write a method called printBinary that takes an integer and prints out the number
      *  in binary (base 2). Your implementation must use recursion. 
@@ -51,5 +59,27 @@ public class Practice {
      *  input: printBinary(5), output: 0101 (or 101)
      *  input: printBinary(201), output: 011001001 (or 11001001)
      */ 
-    // TODO: write the method printBinary
+    public void printBinary(int n) {
+        if (n > Integer.MAX_VALUE | n < 0) {
+            throw new IllegalArgumentException();
+        }
+        // System.out.print("0b");
+        printBinaryAux(n, BITS_IN_AN_INT - Integer.numberOfLeadingZeros(n));
+        System.out.println();
+    }
+    private void printBinaryAux(int n, int bitLoc) {
+        if (bitLoc < 0) {
+            return; // all bits printed
+        }
+
+        final int curBit = n & (1 << bitLoc); // mask just the bit `bitLoc` bits away from the right
+        if (curBit == 0) {
+            System.out.print("0");
+        }
+        else {
+            System.out.print("1");
+        }
+
+        printBinaryAux(n, bitLoc - 1);
+    }
 }
