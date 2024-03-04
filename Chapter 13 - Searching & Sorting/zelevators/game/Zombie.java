@@ -39,20 +39,21 @@ public class Zombie extends GameObject {
     private Vec2 halfDims = null;
 
     // Constructors...
-    public Zombie(int initialFloor) {
+    protected Zombie(int playerIdx, int initialFloor, int targetFloor) {
+        // Super...
+        super(playerIdx);
+
         // Save off our params...
+        this.playerIdx = playerIdx;
         state = State.Entering;
         currentFloor = initialFloor;
+        this.targetFloor = targetFloor;
 
-        // Init...
+        // Init (remove random in 2 player mode)...
         halfDims = Vec2.multiply(NOMINAL_HALFDIMS, Util.randRange(0.9, 1.0));
-        pos = new Vec2(halfDims.x * Util.randRange(0.75, 1.25), World.FLOOR_HEIGHT * currentFloor + halfDims.y + VERTICAL_OFFSET);
-        waitAreaOffset = World.ZOMBIE_WAITING_AREA_MAX_OFFSET * Util.randRange(0.75, 1.25);
-        walkSpeedScalar = Util.randRange(0.9, 1.1);
-
-        // Figure out where we're going (random target floor)...
-        targetFloor = Util.randRangeInt(0, Game.get().getFloorCount() - 2);
-        targetFloor = (targetFloor < currentFloor) ? targetFloor : (targetFloor + 1);
+        pos = new Vec2(halfDims.x * ((Game.get().getPlayerCount() > 1) ? 1.0 : Util.randRange(0.75, 1.25)), World.FLOOR_HEIGHT * currentFloor + halfDims.y + VERTICAL_OFFSET);
+        waitAreaOffset = World.ZOMBIE_WAITING_AREA_MAX_OFFSET * ((Game.get().getPlayerCount() > 1) ? 1.0 : Util.randRange(0.75, 1.25));
+        walkSpeedScalar = (Game.get().getPlayerCount() > 1) ? 1.0 : Util.randRange(0.9, 1.1); 
 
         // Texture...
         try {
@@ -61,6 +62,13 @@ public class Zombie extends GameObject {
         } 
         catch (IOException e) {
         }
+    }
+
+    // Static helpers...
+    protected static int calcRandomTargetFloor(int currentFloor) {
+        int targetFloor = Util.randRangeInt(0, Game.get().getFloorCount() - 2);
+        targetFloor = (targetFloor < currentFloor) ? targetFloor : (targetFloor + 1);
+        return targetFloor;
     }
 
     // Accessors...
@@ -100,13 +108,13 @@ public class Zombie extends GameObject {
                 pos.x = Math.min(pos.x + walkSpeed * deltaTime, World.ELEVATOR_LEFT_RIGHT_SPACE + waitAreaOffset);
                 if (pos.x >= World.ELEVATOR_LEFT_RIGHT_SPACE + waitAreaOffset) {
                     state = State.Waiting;
-                    Simulation.get().addElevatorRequest(currentFloor, (targetFloor > currentFloor) ? ElevatorController.Direction.Up : ElevatorController.Direction.Down);
+                    Simulation.get(playerIdx).addElevatorRequest(currentFloor, (targetFloor > currentFloor) ? ElevatorController.Direction.Up : ElevatorController.Direction.Down);
                 }
                 isWalking = true;
             } break;
             case Waiting : {
                 // Check for an open elevator...
-                ArrayList<Elevator> elevators = Simulation.get().getElevators();
+                ArrayList<Elevator> elevators = Simulation.get(playerIdx).getElevators();
                 for (int i = 0; i < elevators.size(); i++) {
                     Elevator elevator = elevators.get(i);
                     if (elevator.canAcceptNewZombiePassenger(this)) {
@@ -117,22 +125,22 @@ public class Zombie extends GameObject {
 
                 // Make sure our button is pressed...
                 if ((state == State.Waiting) &&
-                    !Simulation.get().hasElevatorRequest((int)currentFloor, (targetFloor > currentFloor) ? ElevatorController.Direction.Up : ElevatorController.Direction.Down)) {
+                    !Simulation.get(playerIdx).hasElevatorRequest((int)currentFloor, (targetFloor > currentFloor) ? ElevatorController.Direction.Up : ElevatorController.Direction.Down)) {
                     // Press it again...
-                    Simulation.get().addElevatorRequest(currentFloor, (targetFloor > currentFloor) ? ElevatorController.Direction.Up : ElevatorController.Direction.Down);
+                    Simulation.get(playerIdx).addElevatorRequest(currentFloor, (targetFloor > currentFloor) ? ElevatorController.Direction.Up : ElevatorController.Direction.Down);
                 }
 
                 // Check to see if we've starved (can in waiting)
                 if (timeSinceBorn >= STARVATION_TIME) {
                     // Zombie: Starved!
-                    Game.get().awardPoints(Game.POINTS_ZOMBIE_STARVED);
+                    Game.get().awardPoints(playerIdx, Game.POINTS_ZOMBIE_STARVED);
                     timeSinceStarved = 0.0;
                     state = State.Starved;
                 }
             } break;
             case Boarding : {
                 // Find the target elevator (note that we might no longer have one)...
-                ArrayList<Elevator> elevators = Simulation.get().getElevators();
+                ArrayList<Elevator> elevators = Simulation.get(playerIdx).getElevators();
                 Elevator trgElevator = null;
                 for (int i = 0; i < elevators.size(); i++) {
                     Elevator elevator = elevators.get(i);
@@ -174,7 +182,7 @@ public class Zombie extends GameObject {
             } break;
             case OnElevator : {
                 // Wait till we're at our target floor and the doors are open...
-                Elevator elevator = Simulation.get().getElevators().get(onElevatorIdx);
+                Elevator elevator = Simulation.get(playerIdx).getElevators().get(onElevatorIdx);
                 if ((elevator.getCurrentFloor() == (double)targetFloor) && elevator.getAreDoorsOpen()) {
                     // We're here, get of...
                     state = State.WalkingOff;
@@ -187,10 +195,10 @@ public class Zombie extends GameObject {
             } break;
             case WalkingOff : {
                 pos.x = pos.x + WALK_SPEED * deltaTime;
-                double posPixelsX = Util.toPixelsX(pos.x);
-                if (posPixelsX >= (World.get().getOrigin().x + World.get().getCanvasSize().x)) {
+                double posPixelsX = Util.toPixelsX(playerIdx, pos.x);
+                if (posPixelsX >= (World.get(playerIdx).getOrigin().x + World.get(playerIdx).getCanvasSize().x)) {
                     // Zombie: Delivered!
-                    Game.get().awardPoints(Game.POINTS_ZOMBIE_DELIVERED);
+                    Game.get().awardPoints(playerIdx, Game.POINTS_ZOMBIE_DELIVERED);
                     this.timeTillDeath = Math.max(this.timeTillDeath, 0.0001);
                     state = State.Delivered;
                 }
@@ -199,7 +207,7 @@ public class Zombie extends GameObject {
                 // Check to see if we've starved (can in waiting)
                 if ((state == State.WalkingOff) && (timeSinceBorn >= STARVATION_TIME)) {
                     // Zombie: Starved!
-                    Game.get().awardPoints(Game.POINTS_ZOMBIE_STARVED);
+                    Game.get().awardPoints(playerIdx, Game.POINTS_ZOMBIE_STARVED);
                     timeSinceStarved = 0.0;
                     state = State.Starved;
                 }
@@ -241,7 +249,7 @@ public class Zombie extends GameObject {
     }
     protected void draw(Graphics2D g) {
         // If we are in an elevator & the doors are closed, don't render us...
-        if ((state == State.OnElevator) && (Simulation.get().getElevator(onElevatorIdx).getAreDoorsClosed())) {
+        if ((state == State.OnElevator) && (Simulation.get(playerIdx).getElevator(onElevatorIdx).getAreDoorsClosed())) {
             return;
         }
 
@@ -253,7 +261,7 @@ public class Zombie extends GameObject {
             double rotDeg = Util.lerp(rotDegT * -10, -90, starveAnimT);
             double scale = calcDrawScale();
             Vec2 posDraw = Vec2.subtract(Vec2.subtract(pos, Vec2.multiply(new Vec2(0, halfDims.y), 1 - scale)), Vec2.multiply(new Vec2(halfDims.x * 1.25, halfDims.y * 2.05), starveAnimT * scale));
-            Draw.drawImageRotated(g, image, posDraw, halfDims, rotDeg, scale);
+            Draw.drawImageRotated(playerIdx, g, image, posDraw, halfDims, rotDeg, scale);
         }
     }
 }
