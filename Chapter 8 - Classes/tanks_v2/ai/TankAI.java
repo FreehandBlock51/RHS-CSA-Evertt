@@ -26,9 +26,9 @@ public class TankAI extends TankAIBase {
     //  teacher if you are not sure. If it feels like cheating, it probably is.
 
     public boolean updateAI() {
-        if (tank.hasCommand()) {
-            return false;
-        }
+        // if (tank.hasCommand()) {
+        //     return false;
+        // }
 
         if (
             Arrays.stream(getTargets())
@@ -55,19 +55,7 @@ public class TankAI extends TankAIBase {
         }
 
         Arrays.stream(getPowerUps())
-            .sorted((p1, p2) -> {
-                if ((p1.getType().equals("p") && !p2.getType().equals("p")) || 
-                p1.getPos().distanceSqr(getTankPos()) < p2.getPos().distanceSqr(getTankPos())) {
-                    return -1;
-                }
-                else if ((!p1.getType().equals("p") && p2.getType().equals("p")) || 
-                p1.getPos().distanceSqr(getTankPos()) > p2.getPos().distanceSqr(getTankPos())) {
-                    return 1;
-                }
-                else {
-                    return 0;
-                }
-            })
+            .sorted(this::comparePowerUps)
             .findFirst()
             .ifPresent(powerUp -> {
                 final Vec2 dist = powerUp.getPos().subtract(getTankPos());
@@ -85,13 +73,29 @@ public class TankAI extends TankAIBase {
         return true;
     }
 
+    private int comparePowerUps(PowerUp a, PowerUp b) {
+        final int comparedTypes = a.getType().compareTo(b.getType());
+        if (comparedTypes == 0) {
+            return compareDistances(a.getPos(), b.getPos());
+        }
+        return comparedTypes;
+    }
+    private int compareDistances(Vec2 a, Vec2 b) {
+        return Double.compare(
+            a.distanceSqr(getTankPos()),
+            b.distanceSqr(getTankPos())
+        );
+    }
+
     @Override
     public boolean queueCmd(String cmdStr, Vec2 param) {
         if (param.equals(Vec2.zero())) {
             return false;
         }
         final boolean result = !super.queueCmd(cmdStr, param);
-        if (!cmdStr.equals("shoot") && !result) {
+        if (getOther() != null &&
+        getOther().getPos().subtract(getTankPos()).normalize().equals(getTankDir()) &&
+        !cmdStr.equals("shoot")) {
             return super.queueCmd("shoot", getTankDir());
         }
         return result;
