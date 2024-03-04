@@ -75,11 +75,11 @@ public class TankAI extends TankAIBase {
     }
 
     private int comparePowerUps(PowerUp a, PowerUp b) {
-        final int comparedTypes = a.getType().compareTo(b.getType());
-        if (comparedTypes == 0) {
+        // final int comparedTypes = a.getType().compareTo(b.getType());
+        // if (comparedTypes == 0) {
             return compareDistances(a.getPos(), b.getPos());
-        }
-        return comparedTypes;
+        // }
+        // return comparedTypes;
     }
     private int compareDistances(Vec2 a, Vec2 b) {
         return Double.compare(
