@@ -90,6 +90,10 @@ public class TankAI extends TankAIBase {
         if (param.equals(Vec2.zero())) {
             return false;
         }
-        return super.queueCmd(cmdStr, param);
+        final boolean result = !super.queueCmd(cmdStr, param);
+        if (!cmdStr.equals("shoot") && !result) {
+            return super.queueCmd("shoot", getTankDir());
+        }
+        return result;
     }
 }
