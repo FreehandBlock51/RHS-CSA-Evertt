@@ -33,17 +33,7 @@ public class TankAI extends TankAIBase {
         if (
             Arrays.stream(getTargets())
                 .filter(ta -> ta.getPos().distance(getTankPos()) <= getTankShotRange())
-                .sorted((t1, t2) -> {
-                    if (t1.getPos().distanceSqr(getTankPos()) < t2.getPos().distanceSqr(getTankPos())) {
-                        return -1;
-                    }
-                    else if (t1.getPos().distanceSqr(getTankPos()) > t2.getPos().distanceSqr(getTankPos())) {
-                        return 1;
-                    }
-                    else {
-                        return 0;
-                    }
-                })
+                .sorted(this::compareTargets)
                 .findFirst()
                 .map(t -> {
                     queueCmd("shoot", t.getPos().subtract(getTankPos()));
@@ -71,6 +61,17 @@ public class TankAI extends TankAIBase {
             });
 
         return true;
+    }
+
+    private int compareTargets(Target a, Target b) {
+        // final int comparedDistances = compareDistances(a.getPos(), b.getPos());
+        // if (comparedDistances == 0) {
+            return Double.compare(
+                Math.abs(a.getPos().subtract(getTankPos()).angle() - getTankAngle()),
+                Math.abs(b.getPos().subtract(getTankPos()).angle() - getTankAngle())
+            );
+        // }
+        // return comparedDistances;
     }
 
     private int comparePowerUps(PowerUp a, PowerUp b) {
