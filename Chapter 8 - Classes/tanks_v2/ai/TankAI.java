@@ -1,5 +1,9 @@
 package ai;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import game.PowerUp;
 import game.Tank;
 import game.TankAIBase;
@@ -26,37 +30,66 @@ public class TankAI extends TankAIBase {
             return false;
         }
 
-        Target t = null;
-
-        for (Target target : getTargets()) {
-            if (target.getPos().distance(getTankPos()) > getTankShotRange()) {
-                continue;
-            }
-            if (t == null || t.getPos().distance(getTankPos()) > target.getPos().distance(getTankPos())) {
-                t = target;
-            }
-        }
-        if (t != null) {
-            queueCmd("shoot", t.getPos().subtract(getTankPos()));
+        if (
+            Arrays.stream(getTargets())
+                .filter(ta -> ta.getPos().distance(getTankPos()) <= getTankShotRange())
+                .sorted((t1, t2) -> {
+                    if (t1.getPos().distanceSqr(getTankPos()) < t2.getPos().distanceSqr(getTankPos())) {
+                        return -1;
+                    }
+                    else if (t1.getPos().distanceSqr(getTankPos()) > t2.getPos().distanceSqr(getTankPos())) {
+                        return 1;
+                    }
+                    else {
+                        return 0;
+                    }
+                })
+                .findFirst()
+                .map(t -> {
+                    queueCmd("shoot", t.getPos().subtract(getTankPos()));
+                    return true;
+                })
+                .orElse(false)
+        ) {
             return true;
         }
 
-        PowerUp powerUp = getPowerUp();
+        Arrays.stream(getPowerUps())
+            .sorted((p1, p2) -> {
+                if ((p1.getType().equals("p") && !p2.getType().equals("p")) || 
+                p1.getPos().distanceSqr(getTankPos()) < p2.getPos().distanceSqr(getTankPos())) {
+                    return -1;
+                }
+                else if ((!p1.getType().equals("p") && p2.getType().equals("p")) || 
+                p1.getPos().distanceSqr(getTankPos()) > p2.getPos().distanceSqr(getTankPos())) {
+                    return 1;
+                }
+                else {
+                    return 0;
+                }
+            })
+            .findFirst()
+            .ifPresent(powerUp -> {
+                final Vec2 dist = powerUp.getPos().subtract(getTankPos());
 
-        for (PowerUp p : getPowerUps()) {
-            if (powerUp.getType().equals("p") && !p.getType().equals("p")) {
-                continue;
-            }
-            if (p.getType().equals("p") || p.getPos().distance(getTankPos()) < powerUp.getPos().distance(getTankPos())) {
-                powerUp = p;
-            }
-        }
-
-        final Vec2 dist = powerUp.getPos().subtract(getTankPos());
-
-        queueCmd("move", Vec2.right().multiply(dist.x));
-        queueCmd("move", Vec2.up().multiply(dist.y));
+                if (Math.abs(getTankDir().x) < Math.abs(getTankDir().y)) {
+                    queueCmd("move", Vec2.right().multiply(dist.x));
+                    queueCmd("move", Vec2.up().multiply(dist.y));
+                }
+                else {
+                    queueCmd("move", Vec2.up().multiply(dist.y));
+                    queueCmd("move", Vec2.right().multiply(dist.x));
+                }
+            });
 
         return true;
+    }
+
+    @Override
+    public boolean queueCmd(String cmdStr, Vec2 param) {
+        if (param.equals(Vec2.zero())) {
+            return false;
+        }
+        return super.queueCmd(cmdStr, param);
     }
 }
