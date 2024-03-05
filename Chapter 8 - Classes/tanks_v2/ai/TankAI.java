@@ -21,28 +21,6 @@ public class TankAI extends TankAIBase {
     //  modifications to code in the game package. Use your judgement and ask your 
     //  teacher if you are not sure. If it feels like cheating, it probably is.
 
-    private static class DummyAI extends TankAIBase {
-        private final String name;
-        private final int period;
-        public DummyAI(TankAIBase ai) {
-            name = ai.getPlayerName();
-            period = ai.getPlayerPeriod();
-        }
-
-        @Override
-        public String getPlayerName() {
-            return name;
-        }
-        @Override
-        public int getPlayerPeriod() {
-            return period;
-        }
-        @Override
-        public boolean updateAI() {
-            return true;
-        }
-    }
-
     public boolean updateAI() {
         // if (tank.hasCommand()) {
         //     return false;
