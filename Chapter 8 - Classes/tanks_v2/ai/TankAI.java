@@ -1,6 +1,9 @@
 package ai;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Objects;
+
 import game.PowerUp;
 import game.TankAIBase;
 import game.Target;
@@ -26,30 +29,53 @@ public class TankAI extends TankAIBase {
         //     return false;
         // }
 
-        Arrays.stream(getTargets())
-                .filter(ta -> ta.getPos().distance(getTankPos()) <= getTankShotRange())
-                .sorted(this::compareTargets)
-                .forEach(t -> {
-                    queueCmd("shoot", t.getPos().subtract(getTankPos()));
-                });
+        if (getOther() != null && getOther().getPos().distance(getTankPos()) <= getTankShotRange() && getOther().getVel().equals(Vec2.zero())) {
+            queueCmd("shoot", getOther().getPos().subtract(getTankPos()));
+        }
 
-        Arrays.stream(getPowerUps())
+        if (
+            Arrays.stream(getTargets())
+                    .filter(ta -> ta.getPos().distance(getTankPos()) <= getTankShotRange())
+                    .sorted(this::compareTargets)
+                    .map(t -> {
+                        queueCmd("shoot", t.getPos().subtract(getTankPos()));
+                        return null;
+                    })
+                    .count() > 0
+        ) {
+            return true;
+        }
+        else {
+            final Vec2 dest = calculateMiddle(
+                getTargets()[0].getPos(),
+                getTargets()[1].getPos(),
+                getTargets()[2].getPos()
+                );
+            
+            if (Arrays.stream(getTargets()).map(t -> t.getPos().distance(dest)).filter(d -> d <= getTankShotRange() * 1.5).count() > 1) {
+                System.out.println(dest.x + ", " + dest.y);
+                return queueCmd("move", dest.subtract(getTankPos()));
+            }
+        }
+
+        return Arrays.stream(getPowerUps())
             .sorted(this::comparePowerUps)
             .findFirst()
-            .ifPresent(powerUp -> {
+            .map(powerUp -> {
                 final Vec2 dist = powerUp.getPos().subtract(getTankPos());
 
-                if (Math.abs(getTankDir().x) < Math.abs(getTankDir().y)) {
-                    queueCmd("move", Vec2.right().multiply(dist.x));
-                    queueCmd("move", Vec2.up().multiply(dist.y));
-                }
-                else {
-                    queueCmd("move", Vec2.up().multiply(dist.y));
-                    queueCmd("move", Vec2.right().multiply(dist.x));
-                }
-            });
+                return queueCmd("move", dist);
+            }).orElse(false);
+    }
 
-        return true;
+    private static Vec2 calculateMiddle(Vec2 a, Vec2 b, Vec2 c) {
+        final Vec2 mid1 = a.add(b).divide(2);
+        final Vec2 mid2 = a.add(c).divide(2);
+        final double slope1 = (a.y - mid1.y) / (a.x - mid1.x);
+        final double slope2 = (a.y - mid2.y) / (a.x - mid2.x);
+        final double x = (slope1 * mid1.x - slope2 * mid2.x + mid1.y - mid2.y) / (slope1 - slope2);
+        final double y = (mid2.y / slope2 - mid1.y / slope1 + mid1.x - mid2.x) / (1 / slope2 - 1 / slope1);
+        return new Vec2(x, y);
     }
 
     private int compareTargets(Target a, Target b) {
@@ -63,12 +89,29 @@ public class TankAI extends TankAIBase {
         // return comparedDistances;
     }
 
+    private int countTargetsInRangeOf(Vec2 pos) {
+        int count = 0;
+        for (Target t : getTargets()) {
+            if (t.getPos().distance(pos) <= getTankShotRange()) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    private int compareDistancesToTargets(Vec2 a, Vec2 b) {
+        return -Integer.compare(
+            countTargetsInRangeOf(a),
+            countTargetsInRangeOf(b)
+        );
+    }
+
     private int comparePowerUps(PowerUp a, PowerUp b) {
-        // final int comparedTypes = a.getType().compareTo(b.getType());
-        // if (comparedTypes == 0) {
+        final int comparedDistances = compareDistancesToTargets(a.getPos(), b.getPos());
+        if (comparedDistances == 0) {
             return compareDistances(a.getPos(), b.getPos());
-        // }
-        // return comparedTypes;
+        }
+        return comparedDistances;
     }
     private int compareDistances(Vec2 a, Vec2 b) {
         return Double.compare(
@@ -82,7 +125,21 @@ public class TankAI extends TankAIBase {
         if (param.equals(Vec2.zero())) {
             return false;
         }
-        final boolean result = super.queueCmd(cmdStr, param);
+        final boolean result;
+        if (cmdStr.equals("move") && param.angle() % 90 != 0) {
+            if (Math.abs(getTankAngle() - (param.x < 0 ? 180 : 0)) < Math.abs(getTankAngle() - (90 * Math.signum(param.y)))) {
+                result = queueCmd("move", Vec2.right().multiply(param.x)) &
+                    queueCmd("move", Vec2.up().multiply(param.y));
+            }
+            else {
+                result = queueCmd("move", Vec2.up().multiply(param.y)) &
+                    queueCmd("move", Vec2.right().multiply(param.x));
+            }
+        }
+        else {
+            result = super.queueCmd(cmdStr, param);
+        }
+
         if (getOther() != null &&
         getOther().getPos().subtract(getTankPos()).normalize().equals(getTankDir()) &&
         !cmdStr.equals("shoot")) {
