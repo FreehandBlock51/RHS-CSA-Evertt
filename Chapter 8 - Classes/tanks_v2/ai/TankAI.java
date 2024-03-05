@@ -1,11 +1,7 @@
 package ai;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.concurrent.atomic.AtomicBoolean;
-
 import game.PowerUp;
-import game.Tank;
 import game.TankAIBase;
 import game.Target;
 import game.Vec2;
@@ -25,24 +21,39 @@ public class TankAI extends TankAIBase {
     //  modifications to code in the game package. Use your judgement and ask your 
     //  teacher if you are not sure. If it feels like cheating, it probably is.
 
+    private static class DummyAI extends TankAIBase {
+        private final String name;
+        private final int period;
+        public DummyAI(TankAIBase ai) {
+            name = ai.getPlayerName();
+            period = ai.getPlayerPeriod();
+        }
+
+        @Override
+        public String getPlayerName() {
+            return name;
+        }
+        @Override
+        public int getPlayerPeriod() {
+            return period;
+        }
+        @Override
+        public boolean updateAI() {
+            return true;
+        }
+    }
+
     public boolean updateAI() {
         // if (tank.hasCommand()) {
         //     return false;
         // }
 
-        if (
-            Arrays.stream(getTargets())
+        Arrays.stream(getTargets())
                 .filter(ta -> ta.getPos().distance(getTankPos()) <= getTankShotRange())
                 .sorted(this::compareTargets)
-                .findFirst()
-                .map(t -> {
+                .forEach(t -> {
                     queueCmd("shoot", t.getPos().subtract(getTankPos()));
-                    return true;
-                })
-                .orElse(false)
-        ) {
-            return true;
-        }
+                });
 
         Arrays.stream(getPowerUps())
             .sorted(this::comparePowerUps)
@@ -93,7 +104,7 @@ public class TankAI extends TankAIBase {
         if (param.equals(Vec2.zero())) {
             return false;
         }
-        final boolean result = !super.queueCmd(cmdStr, param);
+        final boolean result = super.queueCmd(cmdStr, param);
         if (getOther() != null &&
         getOther().getPos().subtract(getTankPos()).normalize().equals(getTankDir()) &&
         !cmdStr.equals("shoot")) {
