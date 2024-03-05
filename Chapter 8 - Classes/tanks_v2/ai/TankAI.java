@@ -29,19 +29,24 @@ public class TankAI extends TankAIBase {
         //     return false;
         // }
 
-        if (getOther() != null && getOther().getPos().distance(getTankPos()) <= getTankShotRange() && getOther().getVel().equals(Vec2.zero())) {
-            queueCmd("shoot", getOther().getPos().subtract(getTankPos()));
+        if (getOther() != null && getOther().getPos().distance(getTankPos()) <= getTankShotRange() && areVecsEqual(getOther().getVel(), Vec2.zero())) {
+            final Vec2 arg = getOther().getPos().subtract(getTankPos());
+            if (!areVecsEqual(arg.unit(), getTankDir())) {
+                return queueCmd("turn", arg.unit());
+            }
+            return queueCmd("shoot", arg);
         }
 
         if (
             Arrays.stream(getTargets())
                     .filter(ta -> ta.getPos().distance(getTankPos()) <= getTankShotRange())
                     .sorted(this::compareTargets)
+                    .findAny()
                     .map(t -> {
                         queueCmd("shoot", t.getPos().subtract(getTankPos()));
                         return null;
                     })
-                    .count() > 0
+                    .isPresent()
         ) {
             return true;
         }
@@ -120,9 +125,13 @@ public class TankAI extends TankAIBase {
         );
     }
 
+    private static boolean areVecsEqual(Vec2 one, Vec2 other) {
+        return one.subtract(other).distanceSqr(Vec2.zero()) < 0.1;
+    }
+
     @Override
     public boolean queueCmd(String cmdStr, Vec2 param) {
-        if (param.equals(Vec2.zero())) {
+        if (areVecsEqual(param, Vec2.zero())) {
             return false;
         }
         final boolean result;
@@ -141,7 +150,7 @@ public class TankAI extends TankAIBase {
         }
 
         if (getOther() != null &&
-        getOther().getPos().subtract(getTankPos()).normalize().equals(getTankDir()) &&
+        areVecsEqual(getOther().getPos().subtract(getTankPos()).normalize(), getTankDir()) &&
         !cmdStr.equals("shoot")) {
             return super.queueCmd("shoot", getTankDir());
         }
