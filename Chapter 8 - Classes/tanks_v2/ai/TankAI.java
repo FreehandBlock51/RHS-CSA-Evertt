@@ -1,9 +1,13 @@
 package ai;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Stream;
 
+import game.Game;
 import game.PowerUp;
 import game.TankAIBase;
 import game.Target;
@@ -45,17 +49,20 @@ public class TankAI extends TankAIBase {
             return queueCmd("move", getTankPos().subtract(snappedGridPos));
         }
 
-        if (
-            Arrays.stream(getTargets())
-                    .filter(ta -> ta.getPos().distance(getTankPos()) <= getTankShotRange())
-                    .sorted(this::compareTargets)
-                    .findFirst()
-                    .map(t -> {
-                        queueCmd("shoot", t.getPos().subtract(getTankPos()));
-                        return true;
-                    })
-                    .orElse(false)
-        ) {
+        final Stream<Target> targets = Arrays.stream(getTargets())
+            .filter(ta -> ta.getPos().distance(getTankPos()) <= getTankShotRange())
+            .sorted(this::compareTargets);
+        final Function<Target, Boolean> processor = t -> {
+            queueCmd("shoot", t.getPos().subtract(getTankPos()));
+            return true;
+        };
+        // If nobody else exists, we can queue up more shots because we can guarantee they will hit.
+        // Because of the way the tanks work, batching shots will allow us to shoot slightly faster,
+        // which lets us score more points.
+        final boolean shotResults = getOther() == null ?
+            targets.map(processor).count() > 0 :
+            targets.findFirst().map(processor).orElse(false);
+        if (shotResults) {
             return true;
         }
         // else {
