@@ -32,36 +32,44 @@ public class TankAI extends TankAIBase {
         if (getOther() != null && getOther().getPos().distance(getTankPos()) <= getTankShotRange() && areVecsEqual(getOther().getVel(), Vec2.zero())) {
             final Vec2 arg = getOther().getPos().subtract(getTankPos());
             if (!areVecsEqual(arg.unit(), getTankDir())) {
-                return queueCmd("turn", arg.unit());
+                return queueCmd("turn", arg.normalize());
             }
             return queueCmd("shoot", arg);
+        }
+
+        final Vec2 snappedGridPos = new Vec2( // snap tank to grid so shots work correctly
+            Math.floor(getTankPos().x) + 0.5f,
+            Math.floor(getTankPos().y) + 0.5f
+            );
+        if (!areVecsEqual(getTankPos(), snappedGridPos)) {
+            return queueCmd("move", getTankPos().subtract(snappedGridPos));
         }
 
         if (
             Arrays.stream(getTargets())
                     .filter(ta -> ta.getPos().distance(getTankPos()) <= getTankShotRange())
                     .sorted(this::compareTargets)
-                    .findAny()
+                    .findFirst()
                     .map(t -> {
                         queueCmd("shoot", t.getPos().subtract(getTankPos()));
-                        return null;
+                        return true;
                     })
-                    .isPresent()
+                    .orElse(false)
         ) {
             return true;
         }
-        else {
-            final Vec2 dest = calculateMiddle(
-                getTargets()[0].getPos(),
-                getTargets()[1].getPos(),
-                getTargets()[2].getPos()
-                );
+        // else {
+        //     final Vec2 dest = calculateMiddle(
+        //         getTargets()[0].getPos(),
+        //         getTargets()[1].getPos(),
+        //         getTargets()[2].getPos()
+        //         );
             
-            if (Arrays.stream(getTargets()).map(t -> t.getPos().distance(dest)).filter(d -> d <= getTankShotRange() * 1.5).count() > 1) {
-                System.out.println(dest.x + ", " + dest.y);
-                return queueCmd("move", dest.subtract(getTankPos()));
-            }
-        }
+        //     if (Arrays.stream(getTargets()).map(t -> t.getPos().distance(dest)).filter(d -> d <= getTankShotRange() * 1.5).count() > 1) {
+        //         System.out.println(dest.x + ", " + dest.y);
+        //         return queueCmd("move", dest.subtract(getTankPos()));
+        //     }
+        // }
 
         return Arrays.stream(getPowerUps())
             .sorted(this::comparePowerUps)
@@ -126,7 +134,7 @@ public class TankAI extends TankAIBase {
     }
 
     private static boolean areVecsEqual(Vec2 one, Vec2 other) {
-        return one.subtract(other).distanceSqr(Vec2.zero()) < 0.1;
+        return one.distanceSqr(other) <= 0.0001;
     }
 
     @Override
@@ -149,11 +157,11 @@ public class TankAI extends TankAIBase {
             result = super.queueCmd(cmdStr, param);
         }
 
-        if (getOther() != null &&
-        areVecsEqual(getOther().getPos().subtract(getTankPos()).normalize(), getTankDir()) &&
-        !cmdStr.equals("shoot")) {
-            return super.queueCmd("shoot", getTankDir());
-        }
+        // if (getOther() != null &&
+        // areVecsEqual(getOther().getPos().subtract(getTankPos()).normalize(), getTankDir()) &&
+        // !cmdStr.equals("shoot")) {
+        //     return super.queueCmd("shoot", getTankDir());
+        // }
         return result;
     }
 }
