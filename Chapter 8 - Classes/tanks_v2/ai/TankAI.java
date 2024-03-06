@@ -50,7 +50,8 @@ public class TankAI extends TankAIBase {
         }
 
         final Stream<Target> targets = Arrays.stream(getTargets())
-            .filter(ta -> ta.getPos().distance(getTankPos()) <= getTankShotRange())
+            .filter(ta -> ta.getPos().distance(getTankPos()) <= getTankShotRange() &&
+                !areVecsEqual(ta.getPos(), getTankPos()))
             .sorted(this::compareTargets);
         final Function<Target, Boolean> processor = t -> {
             queueCmd("shoot", t.getPos().subtract(getTankPos()));
@@ -121,7 +122,7 @@ public class TankAI extends TankAIBase {
                 count++;
             }
         }
-        
+
         final int points = count * Game.POINTS_HIT_TARGET;
         if (powerUp.getType().equals("P")) {
             return points + Game.POINTS_POWERUP_PTS;
