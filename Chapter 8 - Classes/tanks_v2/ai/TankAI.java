@@ -109,25 +109,37 @@ public class TankAI extends TankAIBase {
         // return comparedDistances;
     }
 
-    private int countTargetsInRangeOf(Vec2 pos) {
+    private int calculatePotentialPoints(PowerUp powerUp) {
+        final Vec2 pos = powerUp.getPos();
+        final double range = powerUp.getType().equals("R") ?
+            getTankShotRange() * (1 + ((double)Game.POINTS_POWERUP_RANGE / 100)) :
+            getTankShotRange();
+
         int count = 0;
         for (Target t : getTargets()) {
-            if (t.getPos().distance(pos) <= getTankShotRange()) {
+            if (t.getPos().distance(pos) <= range) {
                 count++;
             }
         }
-        return count;
+        
+        final int points = count * Game.POINTS_HIT_TARGET;
+        if (powerUp.getType().equals("P")) {
+            return points + Game.POINTS_POWERUP_PTS;
+        }
+        else {
+            return points;
+        }
     }
 
-    private int compareDistancesToTargets(Vec2 a, Vec2 b) {
+    private int comparePowerUpPointValues(PowerUp a, PowerUp b) {
         return -Integer.compare(
-            countTargetsInRangeOf(a),
-            countTargetsInRangeOf(b)
+            calculatePotentialPoints(a),
+            calculatePotentialPoints(b)
         );
     }
 
     private int comparePowerUps(PowerUp a, PowerUp b) {
-        final int comparedDistances = compareDistancesToTargets(a.getPos(), b.getPos());
+        final int comparedDistances = comparePowerUpPointValues(a, b);
         if (comparedDistances == 0) {
             return compareDistances(a.getPos(), b.getPos());
         }
