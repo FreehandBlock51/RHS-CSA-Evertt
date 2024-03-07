@@ -33,8 +33,6 @@ public class TankAI extends TankAIBase {
     //  Note that you are not allowed to reach into game code directly or make any
     //  modifications to code in the game package. Use your judgement and ask your 
     //  teacher if you are not sure. If it feels like cheating, it probably is.
-    private static final Random R = new Random();
-
     private static final int POT_MAX = 5;
     private int potCount = 0;
 
