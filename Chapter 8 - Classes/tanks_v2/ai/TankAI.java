@@ -1,14 +1,20 @@
 package ai;
 
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.rmi.AccessException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.Random;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
 import game.Game;
 import game.PowerUp;
+import game.Tank;
 import game.TankAIBase;
 import game.Target;
 import game.Vec2;
@@ -27,27 +33,23 @@ public class TankAI extends TankAIBase {
     //  Note that you are not allowed to reach into game code directly or make any
     //  modifications to code in the game package. Use your judgement and ask your 
     //  teacher if you are not sure. If it feels like cheating, it probably is.
+    private static final Random R = new Random();
+
+    private static final int POT_MAX = 5;
+    private int potCount = 0;
 
     public boolean updateAI() {
         // if (tank.hasCommand()) {
         //     return false;
         // }
 
-        if (getOther() != null && getOther().getPos().distance(getTankPos()) <= getTankShotRange() && areVecsEqual(getOther().getVel(), Vec2.zero())) {
-            final Vec2 arg = getOther().getPos().subtract(getTankPos());
-            if (!areVecsEqual(arg.unit(), getTankDir())) {
-                return queueCmd("turn", arg.normalize());
-            }
-            return queueCmd("shoot", arg);
-        }
-
-        final Vec2 snappedGridPos = new Vec2( // snap tank to grid so shots work correctly
-            Math.floor(getTankPos().x) + 0.5f,
-            Math.floor(getTankPos().y) + 0.5f
-            );
-        if (!areVecsEqual(getTankPos(), snappedGridPos)) {
-            return queueCmd("move", getTankPos().subtract(snappedGridPos));
-        }
+        // final Vec2 snappedGridPos = new Vec2( // snap tank to grid so shots work correctly
+        //     Math.floor(getTankPos().x) + 0.5,
+        //     Math.floor(getTankPos().y) + 0.5
+        //     );
+        // if (snappedGridPos.distance(getTankPos()) > 0.5) {
+        //     return queueCmd("move", getTankPos().subtract(snappedGridPos));
+        // }
 
         final Stream<Target> targets = Arrays.stream(getTargets())
             .filter(ta -> ta.getPos().distance(getTankPos()) <= getTankShotRange() &&
@@ -78,6 +80,17 @@ public class TankAI extends TankAIBase {
         //         return queueCmd("move", dest.subtract(getTankPos()));
         //     }
         // }
+
+        // if the other tank is standing still and within range, take some potshots
+        if (getOther() != null && potCount < POT_MAX && getOther().getPos().distance(getTankPos()) <= getTankShotRange() && areVecsEqual(getOther().getVel(), Vec2.zero())) {
+            potCount++;
+            final Vec2 arg = getOther().getPos().subtract(getTankPos());
+            if (!areVecsEqual(arg.unit(), getTankDir())) {
+                return queueCmd("turn", arg.normalize());
+            }
+            return queueCmd("shoot", arg);
+        }
+        potCount = 0; // shooting the tank doesn't give a lot of points, so if we do it too much, we risk our opponent beating us
 
         return Arrays.stream(getPowerUps())
             .sorted(this::comparePowerUps)
@@ -124,7 +137,7 @@ public class TankAI extends TankAIBase {
         }
 
         final int points = count * Game.POINTS_HIT_TARGET;
-        if (powerUp.getType().equals("P")) {
+        if (powerUp.getType().equals("S")) {
             return points + Game.POINTS_POWERUP_PTS;
         }
         else {
@@ -154,12 +167,12 @@ public class TankAI extends TankAIBase {
     }
 
     private static boolean areVecsEqual(Vec2 one, Vec2 other) {
-        return one.distanceSqr(other) <= 0.0001;
+        return one.distanceSqr(other) <= 0.001;
     }
 
     @Override
     public boolean queueCmd(String cmdStr, Vec2 param) {
-        if (areVecsEqual(param, Vec2.zero())) {
+        if (param.distance(Vec2.zero()) <= 0.1) {
             return false;
         }
         final boolean result;
