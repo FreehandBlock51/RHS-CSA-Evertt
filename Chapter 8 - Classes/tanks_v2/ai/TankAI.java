@@ -1,20 +1,12 @@
 package ai;
 
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.rmi.AccessException;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Random;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
 import game.Game;
 import game.PowerUp;
-import game.Tank;
 import game.TankAIBase;
 import game.Target;
 import game.Vec2;
