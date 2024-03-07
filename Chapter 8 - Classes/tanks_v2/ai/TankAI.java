@@ -99,12 +99,17 @@ public class TankAI extends TankAIBase {
         return new Vec2(x, y);
     }
 
+    private double makeAnglePositive(double angle) {
+        while (angle < 0) angle += 360;
+        return angle;
+    }
+
     private int compareTargets(Target a, Target b) {
         // final int comparedDistances = compareDistances(a.getPos(), b.getPos());
         // if (comparedDistances == 0) {
             return Double.compare(
-                Math.abs(a.getPos().subtract(getTankPos()).angle() - getTankAngle()),
-                Math.abs(b.getPos().subtract(getTankPos()).angle() - getTankAngle())
+                Math.abs(makeAnglePositive(a.getPos().subtract(getTankPos()).angle()) - makeAnglePositive(getTankAngle())),
+                Math.abs(makeAnglePositive(b.getPos().subtract(getTankPos()).angle()) - makeAnglePositive(getTankAngle()))
             );
         // }
         // return comparedDistances;
