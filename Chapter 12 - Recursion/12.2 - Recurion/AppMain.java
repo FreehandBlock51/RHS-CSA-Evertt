@@ -1,3 +1,9 @@
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintStream;
+import java.nio.Buffer;
+import java.nio.ByteBuffer;
 import java.util.Objects;
 
 public class AppMain {
@@ -43,5 +49,13 @@ public class AppMain {
         practice.printBinary(201);
         System.out.print("(should be 0) printBinary(0) => ");
         practice.printBinary(0);
+
+        System.out.println("\n-------- printBinaryR --------");
+        System.out.print("(should be 0101) printBinaryR(5) => ");
+        practice.printBinaryR(5);
+        System.out.print("(should be 011001001) printBinaryR(201) => ");
+        practice.printBinaryR(201);
+        System.out.print("(should be 0) printBinaryR(0) => ");
+        practice.printBinaryR(0);
     }
 }

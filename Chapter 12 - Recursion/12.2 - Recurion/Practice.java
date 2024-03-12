@@ -58,16 +58,35 @@ public class Practice {
      * Examples...
      *  input: printBinary(5), output: 0101 (or 101)
      *  input: printBinary(201), output: 011001001 (or 11001001)
-     */ 
+     */
     public void printBinary(int n) {
         if (n > Integer.MAX_VALUE | n < 0) {
             throw new IllegalArgumentException();
         }
         // System.out.print("0b");
-        printBinaryAux(n, BITS_IN_AN_INT - Integer.numberOfLeadingZeros(n));
+        
+        for (int bitLoc = BITS_IN_AN_INT - Integer.numberOfLeadingZeros(n); bitLoc >= 0; bitLoc--) {
+    
+            final int curBit = n & (1 << bitLoc); // mask just the bit `bitLoc` bits away from the right
+            if (curBit == 0) {
+                System.out.print("0");
+            }
+            else {
+                System.out.print("1");
+            }
+        }
+
         System.out.println();
     }
-    private void printBinaryAux(int n, int bitLoc) {
+    public void printBinaryR(int n) {
+        if (n > Integer.MAX_VALUE | n < 0) {
+            throw new IllegalArgumentException();
+        }
+        // System.out.print("0b");
+        printBinaryRAux(n, BITS_IN_AN_INT - Integer.numberOfLeadingZeros(n));
+        System.out.println();
+    }
+    private void printBinaryRAux(int n, int bitLoc) {
         if (bitLoc < 0) {
             return; // all bits printed
         }
@@ -80,6 +99,6 @@ public class Practice {
             System.out.print("1");
         }
 
-        printBinaryAux(n, bitLoc - 1);
+        printBinaryRAux(n, bitLoc - 1);
     }
 }
