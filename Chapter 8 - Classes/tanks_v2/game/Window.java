@@ -19,7 +19,7 @@ public class Window extends JFrame implements KeyListener {
     }
 
     // Constants...
-    public static final String WINDOW_TITLE = "CS-A: Tanks.v1";
+    public static final String WINDOW_TITLE = "CS-A: Tanks.v2";
     public static final int DEFAULT_WINDOW_WIDTH = 1024;
     public static final int DEFAULT_WINDOW_HEIGHT = 600;
 
@@ -32,7 +32,7 @@ public class Window extends JFrame implements KeyListener {
         setMinimumSize(new Dimension(DEFAULT_WINDOW_WIDTH / 2, DEFAULT_WINDOW_HEIGHT / 2));
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
-        addKeyListener(this);     
+        addKeyListener(this);
     }
 
     protected static boolean create() {
