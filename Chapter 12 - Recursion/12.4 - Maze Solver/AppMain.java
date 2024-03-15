@@ -1,3 +1,5 @@
+import java.util.Arrays;
+
 public class AppMain {
     private static Maze maze = new Maze();
 
@@ -7,13 +9,55 @@ public class AppMain {
         //  can answer questions about open spaces, possible moves, etc.
         // On each step, you can only move in a cardinal direction (left/right/up/down).
         // Your solution should take the form of an array of Locations
-        // TODO: ...
 
         // Print out your solution, maze can do that for you (it's already written)
-        Location[] replaceWithYourSln = new Location[0];
+        Location[] replaceWithYourSln = solveMaze(maze);
         maze.printMazeAndPath(replaceWithYourSln);
     }
-
+    private static Location[] solveMaze(Maze maze) {
+        return solveMazeFrom(maze, new Location[] {maze.getStartLoc()});
+    }
+    private static Location[] solveMazeFrom(Maze maze, Location[] currentPath) {
+        final Location currentLocation = currentPath[currentPath.length - 1];
+        if (maze.isExit(currentLocation)) {
+            return currentPath;
+        }
+        if (hasVisitedNode(currentLocation)) {
+            return null;
+        }
+        markVisited(currentLocation);
+        final Location[] nextPath = Arrays.copyOf(currentPath, currentPath.length + 1);
+        final int nextLocationIndex = currentPath.length;
+        if (maze.canGoRight(currentLocation)) {
+            nextPath[nextLocationIndex] = new Location(currentLocation).incRight();
+            final Location[] finalPath = solveMazeFrom(maze, nextPath);
+            if (finalPath != null) {
+                return finalPath;
+            }
+        }
+        if (maze.canGoDown(currentLocation)) {
+            nextPath[nextLocationIndex] = new Location(currentLocation).incDown();
+            final Location[] finalPath = solveMazeFrom(maze, nextPath);
+            if (finalPath != null) {
+                return finalPath;
+            }
+        }
+        if (maze.canGoUp(currentLocation)) {
+            nextPath[nextLocationIndex] = new Location(currentLocation).incUp();
+            final Location[] finalPath = solveMazeFrom(maze, nextPath);
+            if (finalPath != null) {
+                return finalPath;
+            }
+        }
+        if (maze.canGoLeft(currentLocation)) {
+            nextPath[nextLocationIndex] = new Location(currentLocation).incLeft();
+            final Location[] finalPath = solveMazeFrom(maze, nextPath);
+            if (finalPath != null) {
+                return finalPath;
+            }
+        }
+        return null;
+    }
 
     // Helper methods for marking locations as visited
     //  You are probably going to want to use: hasVisitedNode & markVisited.
