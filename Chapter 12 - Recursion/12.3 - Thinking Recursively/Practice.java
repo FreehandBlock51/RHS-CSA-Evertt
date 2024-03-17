@@ -1,5 +1,3 @@
-import java.util.Arrays;
-
 public class Practice {
     /* Write a palindrome string checker. It should take a String as input and
      *  return a boolean to indicate if it is a palindrome. Note that a palindrome
