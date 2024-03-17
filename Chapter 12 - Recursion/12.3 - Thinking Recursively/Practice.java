@@ -12,7 +12,7 @@ public class Practice {
      *  input: isPalindrome("test"), output: false
      */ 
     public boolean isPalindrome(String str) {
-        if (str.length() == 0) {
+        if (str.length() <= 1) {
             return true;
         }
         if (!str.substring(str.length() - 1).equals(str.substring(0, 1))) {
@@ -86,7 +86,7 @@ public class Practice {
     public int minValue(int[] arr, int idx) {
         try {
             final int firstMin = arr[idx];
-            return minValue_aux(arr, idx + 1, firstMin)
+            return minValue_aux(arr, idx + 1, firstMin);
         }
         catch (NullPointerException e) {
             throw new IllegalArgumentException("Given a null array!");
