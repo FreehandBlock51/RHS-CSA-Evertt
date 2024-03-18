@@ -28,35 +28,34 @@ public class AppMain {
         markVisited(currentLocation);
         final Location[] nextPath = Arrays.copyOf(currentPath, currentPath.length + 1);
         final int nextLocationIndex = currentPath.length;
+        final Location[][] availablePaths = new Location[4][];
         if (maze.canGoRight(currentLocation)) {
             nextPath[nextLocationIndex] = new Location(currentLocation).incRight();
             final Location[] finalPath = solveMazeFrom(maze, nextPath);
-            if (finalPath != null) {
-                return finalPath;
-            }
+            availablePaths[0] = finalPath;
         }
         if (maze.canGoDown(currentLocation)) {
             nextPath[nextLocationIndex] = new Location(currentLocation).incDown();
             final Location[] finalPath = solveMazeFrom(maze, nextPath);
-            if (finalPath != null) {
-                return finalPath;
-            }
+            availablePaths[1] = finalPath;
         }
         if (maze.canGoUp(currentLocation)) {
             nextPath[nextLocationIndex] = new Location(currentLocation).incUp();
             final Location[] finalPath = solveMazeFrom(maze, nextPath);
-            if (finalPath != null) {
-                return finalPath;
-            }
+            availablePaths[2] = finalPath;
         }
         if (maze.canGoLeft(currentLocation)) {
             nextPath[nextLocationIndex] = new Location(currentLocation).incLeft();
             final Location[] finalPath = solveMazeFrom(maze, nextPath);
-            if (finalPath != null) {
-                return finalPath;
+            availablePaths[3] = finalPath;
+        }
+        Location[] bestPath = null;
+        for (Location[] path : availablePaths) {
+            if (bestPath == null || (path != null && bestPath.length > path.length)) {
+                bestPath = path;
             }
         }
-        return null;
+        return bestPath;
     }
 
     // Helper methods for marking locations as visited
