@@ -21,6 +21,8 @@ public class NumberGuesser extends NumberGuesserBase {
         return g;
     }
 
+    private final boolean USE_RECURSION = false;
+
     /* guessNumberFast() should try to guess the number with the minimum
      *   number of guesses. This is the method I will judge you on. 
      *   Unlike the sequential guesser, this method should attempt to 
@@ -28,6 +30,9 @@ public class NumberGuesser extends NumberGuesserBase {
     public int guessNumberFast() {
         int blockStart = NumberGuesserBase.MIN_NUMBER;
         int blockEnd = NumberGuesserBase.MAX_NUMBER + 1; // so floor on division doesn't break us
+        if (USE_RECURSION) {
+            return guessNumberFastR(blockStart, blockEnd);
+        }
         int result;
         int middle;
         do {
@@ -41,7 +46,26 @@ public class NumberGuesser extends NumberGuesserBase {
                 blockStart = middle;
                 continue;
             }
-        } while (result != 0);
+        } while (result != 0 && blockStart <= blockEnd);
         return middle;
+    }
+    public int guessNumberFastR() {
+        return guessNumberFastR(NumberGuesserBase.MIN_NUMBER, NumberGuesserBase.MAX_NUMBER + 1);
+    }
+    public int guessNumberFastR(int min, int max) {
+        int result;
+        int middle;
+        middle = (min + max) / 2;
+        result = guess(middle);
+        if (result == 0 || min > max) {
+            return middle;
+        }
+        if (result < 0) {
+            max = middle;
+        }
+        if (result > 0) {
+            min = middle;
+        }
+        return guessNumberFastR(min, max);
     }
 }
