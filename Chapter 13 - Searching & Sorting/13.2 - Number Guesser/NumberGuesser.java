@@ -12,8 +12,13 @@ public class NumberGuesser extends NumberGuesserBase {
      *   This method should not attempt to minimize guesses, it is purely 
      *   a linear / sequential guesser. Keep it simple. */
     public int guessNumberBasic() {
-        // TODO
-        return -1;
+        int g = (NumberGuesserBase.MIN_NUMBER + NumberGuesserBase.MAX_NUMBER) / 2;
+        int result;
+        do {
+            result = guess(g);
+            g += result;
+        } while (result != 0);
+        return g;
     }
 
     /* guessNumberFast() should try to guess the number with the minimum
@@ -21,7 +26,22 @@ public class NumberGuesser extends NumberGuesserBase {
      *   Unlike the sequential guesser, this method should attempt to 
      *   minimize the number of guesses it takes to guess the answer. */
     public int guessNumberFast() {
-        // TODO
-        return -1;
+        int blockStart = NumberGuesserBase.MIN_NUMBER;
+        int blockEnd = NumberGuesserBase.MAX_NUMBER + 1; // so floor on division doesn't break us
+        int result;
+        int middle;
+        do {
+            middle = (blockStart + blockEnd) / 2;
+            result = guess(middle);
+            if (result < 0) {
+                blockEnd = middle;
+                continue;
+            }
+            if (result > 0) {
+                blockStart = middle;
+                continue;
+            }
+        } while (result != 0);
+        return middle;
     }
 }
