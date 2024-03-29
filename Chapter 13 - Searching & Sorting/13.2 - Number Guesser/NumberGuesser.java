@@ -37,6 +37,9 @@ public class NumberGuesser extends NumberGuesserBase {
         int middle;
         do {
             middle = (blockStart + blockEnd) / 2;
+            if (blockStart == blockEnd) {
+                break;
+            }
             result = guess(middle);
             if (result < 0) {
                 blockEnd = middle;
@@ -56,8 +59,11 @@ public class NumberGuesser extends NumberGuesserBase {
         int result;
         int middle;
         middle = (min + max) / 2;
+        if (min >= max) {
+            return middle;
+        }
         result = guess(middle);
-        if (result == 0 || min > max) {
+        if (result == 0) {
             return middle;
         }
         if (result < 0) {
