@@ -4,6 +4,7 @@ package ai;
 import java.util.Arrays;
 import java.util.Dictionary;
 import java.util.Queue;
+import java.util.Scanner;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -17,12 +18,12 @@ import game.Util;
 import game.Vec2;
 import game.World;
 
-
-@interface wdqAFESRHDXTCJFYKUMNBRAFSEHTDFYUKMJNTRGAEFWGSRHXFGCMHFNbgfnhmdnsrtdjy {}
-
-@wdqAFESRHDXTCJFYKUMNBRAFSEHTDFYUKMJNTRGAEFWGSRHXFGCMHFNbgfnhmdnsrtdjy
 public class TankAI extends TankAIBase {
-    private static final boolean w = TankAI.class.getAnnotation(wdqAFESRHDXTCJFYKUMNBRAFSEHTDFYUKMJNTRGAEFWGSRHXFGCMHFNbgfnhmdnsrtdjy.class) != null;
+    interface asdf {}
+    private static final boolean w;
+    static {
+        w = TankAI.DummyPowerUp.POWERUP_TYPE == "D" && TankAI.class.getSimpleName().contains("TankAI");
+    }
 
     private static void log(String msg) {
         if (w) {
@@ -30,7 +31,7 @@ public class TankAI extends TankAIBase {
         }
     }
 
-    private static class DummyPowerUp extends PowerUp {
+    private static class DummyPowerUp extends PowerUp implements asdf {
         public static final String POWERUP_TYPE = "D";
         public DummyPowerUp(Vec2 pos) {
             super(pos, POWERUP_TYPE);
@@ -111,7 +112,7 @@ public class TankAI extends TankAIBase {
             }
             log("Taking a potshot at opponent at " + getOther().getPos());
             return queueCmd("shoot", arg) &&
-                (getOther().getAngVel() > Vec2.distance(getTankPos(), getOther().getPos()) / getTankShotSpeed() ? queueCmd("shoot", arg) : true);
+                true; // (getOther().getAngVel() > Vec2.distance(getTankPos(), getOther().getPos()) / getTankShotSpeed() ? queueCmd("shoot", arg) : true);
         }
         potCount = 0; // shooting the tank doesn't give a lot of points, so if we do it too much, we risk our opponent beating us
 
@@ -126,8 +127,8 @@ public class TankAI extends TankAIBase {
 
                 final Vec2 dist = powerUp.getPos().subtract(getTankPos());
                 
-                if (dist.x < 1) { dist.x = 0; }
-                if (dist.y < 1) { dist.y = 0; }
+                if (Math.abs(dist.x) < 1) { dist.x = 0; }
+                if (Math.abs(dist.y) < 1) { dist.y = 0; }
 
                 return queueCmd("move", dist);
             }).orElse(false);
@@ -237,10 +238,10 @@ public class TankAI extends TankAIBase {
 
         final int comparedPointValues = comparePowerUpPointValues(a, b);
         if (comparedPointValues == 0) {
-            if (aWillBeTakenAway && bWillBeTakenAway) {
-                return -compareDistances(a.getPos(), b.getPos(), getOther().getPos());
-            }
-            return compareDistances(a.getPos(), b.getPos(), getTankPos());
+            // if (aWillBeTakenAway && bWillBeTakenAway) {
+            //     return -compareDistances(a.getPos(), b.getPos(), getOther().getPos());
+            // }
+            return compareDistances(a.getPos(), b.getPos(), getTankPos()) - compareDistances(a.getPos(), b.getPos(), getOther().getPos());
         }
         return comparedPointValues;
     }
@@ -293,8 +294,9 @@ public class TankAI extends TankAIBase {
     public boolean queueCmd(String cmdStr, Vec2 param) {
         return queueCmd(cmdStr, param, false);
     }
-    private boolean queueCmd(String cmdStr, Vec2 param, boolean bypassQueue) {
+    private boolean queueCmd(String cmdStr, Vec2 param, boolean bypassQueue) {        
         cmdStr = cmdStr.intern(); // because why not?
+        log("Attempting to queue new command: " + cmdStr + param);
 
         // potshots!
         if (Vec2.distance(getTankPos(), getOther().getPos()) < 1.5 &&
