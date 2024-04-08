@@ -53,6 +53,7 @@ public class TankAI extends TankAIBase {
     private int potCount = 0;
 
     public boolean updateAI() {
+        log("updating AI for tank at " + getTankPos() + "...");
 
         // if (tank.hasCommand()) {
         //     return false;
