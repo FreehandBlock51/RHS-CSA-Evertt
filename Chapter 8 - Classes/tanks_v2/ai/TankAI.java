@@ -17,7 +17,18 @@ import game.Util;
 import game.Vec2;
 import game.World;
 
+
+@interface wdqAFESRHDXTCJFYKUMNBRAFSEHTDFYUKMJNTRGAEFWGSRHXFGCMHFNbgfnhmdnsrtdjy {}
+
+@wdqAFESRHDXTCJFYKUMNBRAFSEHTDFYUKMJNTRGAEFWGSRHXFGCMHFNbgfnhmdnsrtdjy
 public class TankAI extends TankAIBase {
+    private static final boolean w = TankAI.class.getAnnotation(wdqAFESRHDXTCJFYKUMNBRAFSEHTDFYUKMJNTRGAEFWGSRHXFGCMHFNbgfnhmdnsrtdjy.class) != null;
+
+    private static void log(String msg) {
+        if (w) {
+            Util.log(msg);
+        }
+    }
 
     private static class DummyPowerUp extends PowerUp {
         public static final String POWERUP_TYPE = "D";
@@ -94,24 +105,30 @@ public class TankAI extends TankAIBase {
             potCount++;
             final Vec2 arg = getOther().getPos().subtract(getTankPos());
             if (!areVecsEqual(arg.unit(), getTankDir())) {
+                log("Opportunistically looking to shoot opponent at " + getOther().getPos());
                 return queueCmd("turn", arg.normalize());
             }
+            log("Taking a potshot at opponent at " + getOther().getPos());
             return queueCmd("shoot", arg) &&
                 (getOther().getAngVel() > Vec2.distance(getTankPos(), getOther().getPos()) / getTankShotSpeed() ? queueCmd("shoot", arg) : true);
         }
         potCount = 0; // shooting the tank doesn't give a lot of points, so if we do it too much, we risk our opponent beating us
 
         final Vec2 centroid = calculateCentroid(getPowerUps()[0].getPos(), getPowerUps()[1].getPos(), getPowerUps()[2].getPos());
-        final PowerUp[] toRank = Arrays.copyOf(getPowerUps(), getPowerUps().length + 1);
-        toRank[toRank.length - 1] = new DummyPowerUp(centroid);
-        return Arrays.stream(toRank)
-            .filter(TankAI::isGameObjectInBounds)
+        final PowerUp[] unrankedPowerUps = Arrays.copyOf(getPowerUps(), getPowerUps().length + 1);
+        unrankedPowerUps[unrankedPowerUps.length - 1] = new DummyPowerUp(centroid);
+        return Arrays.stream(unrankedPowerUps)
             .sorted(this::comparePowerUps)
             .findFirst()
             .map(powerUp -> {
-                final Vec2 dist = powerUp.getPos().subtract(getTankPos());
+                log("Moving to powerup at " + powerUp.getPos());
 
-                return queueCmd("move", dist.subtract(dist.unit().multiply(0.25)));
+                final Vec2 dist = powerUp.getPos().subtract(getTankPos());
+                
+                if (dist.x < 1) { dist.x = 0; }
+                if (dist.y < 1) { dist.y = 0; }
+
+                return queueCmd("move", dist);
             }).orElse(false);
     }
 
@@ -290,7 +307,7 @@ public class TankAI extends TankAIBase {
         }
 
         if (param.lengthSqr() <= 0.01) {
-            Util.log("discarding command with zero-length parameter");
+            log("discarding command with zero-length parameter");
             return false;
         }
         
@@ -299,7 +316,7 @@ public class TankAI extends TankAIBase {
                 {
                     final Vec2 destination = Vec2.add(getTankPos(), param);
                     if ((Math.abs(param.x) > 0.000001) && (Math.abs(param.y) > 0.000001)) { // Tanks move only horizontally & vertically
-                        Util.log("Adjusting diagonal move");
+                        log("Adjusting diagonal move");
                         final double verticalAngle = 90 * Math.signum(param.y);
                         final double horizontalAngle = 90 + (-90 * Math.signum(param.x));
                         final double ourAngle = getTankAngle();
@@ -319,11 +336,11 @@ public class TankAI extends TankAIBase {
                         }
                     }
                     else if (Vec2.lengthSqr(param) < 0.001) { // Zero distance
-                        Util.log("discarding zero-distance movement");
+                        log("discarding zero-distance movement");
                         return false;
                     }
                     else if (!isVecInBounds(destination)) { // out of bounds
-                        Util.log("adjusting out-of-bounds move");
+                        log("adjusting out-of-bounds move");
                         return queueCmd(cmdStr, Vec2.clamp(param, minBounds, maxBounds));
                     }
                 }
@@ -331,7 +348,7 @@ public class TankAI extends TankAIBase {
             case "turn":
                 {
                     if (Vec2.lengthSqr(param) < 0.001) { // Zero direction vector
-                        Util.log("discarding zero-direction rotation");
+                        log("discarding zero-direction rotation");
                         return false;
                     }
                 }
@@ -339,7 +356,7 @@ public class TankAI extends TankAIBase {
             case "shoot":
                 {
                     if (Vec2.lengthSqr(param) < 0.001) { // Zero direction vector
-                        Util.log("discarding zero-distance shot");
+                        log("discarding zero-distance shot");
                         return false;
                     }
                 }
