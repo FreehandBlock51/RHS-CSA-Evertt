@@ -2,16 +2,29 @@ package ai;
 
 
 import java.util.Arrays;
+import java.util.Dictionary;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
 import game.Game;
+import game.GameObject;
 import game.PowerUp;
 import game.TankAIBase;
 import game.Target;
+import game.Util;
 import game.Vec2;
+import game.World;
 
 public class TankAI extends TankAIBase {
+
+    private static class DummyPowerUp extends PowerUp {
+        public static final String POWERUP_TYPE = "D";
+        public DummyPowerUp(Vec2 pos) {
+            super(pos, POWERUP_TYPE);
+        }
+    }
 
     public String getPlayerName() {
         return "Dalton";  // <---- Put your first name here
@@ -25,10 +38,11 @@ public class TankAI extends TankAIBase {
     //  Note that you are not allowed to reach into game code directly or make any
     //  modifications to code in the game package. Use your judgement and ask your 
     //  teacher if you are not sure. If it feels like cheating, it probably is.
-    private static final int POT_MAX = 5;
+    private static final int POT_MAX = 25;
     private int potCount = 0;
 
     public boolean updateAI() {
+
         // if (tank.hasCommand()) {
         //     return false;
         // }
@@ -42,6 +56,7 @@ public class TankAI extends TankAIBase {
         // }
 
         final Stream<Target> targets = Arrays.stream(getTargets())
+            .filter(TankAI::isGameObjectInBounds)
             .filter(ta -> ta.getPos().distance(getTankPos()) <= getTankShotRange() &&
                 !areVecsEqual(ta.getPos(), getTankPos()))
             .sorted(this::compareTargets);
@@ -59,7 +74,7 @@ public class TankAI extends TankAIBase {
             return true;
         }
         // else {
-        //     final Vec2 dest = calculateMiddle(
+        //     final Vec2 dest = calculateCentroid(
         //         getTargets()[0].getPos(),
         //         getTargets()[1].getPos(),
         //         getTargets()[2].getPos()
@@ -68,6 +83,9 @@ public class TankAI extends TankAIBase {
         //     if (Arrays.stream(getTargets()).map(t -> t.getPos().distance(dest)).filter(d -> d <= getTankShotRange() * 1.5).count() > 1) {
         //         System.out.println(dest.x + ", " + dest.y);
         //         return queueCmd("move", dest.subtract(getTankPos()));
+        //     }
+        //     else {
+        //         return queueCmd("move", dest);
         //     }
         // }
 
@@ -78,28 +96,68 @@ public class TankAI extends TankAIBase {
             if (!areVecsEqual(arg.unit(), getTankDir())) {
                 return queueCmd("turn", arg.normalize());
             }
-            return queueCmd("shoot", arg);
+            return queueCmd("shoot", arg) &&
+                (getOther().getAngVel() > Vec2.distance(getTankPos(), getOther().getPos()) / getTankShotSpeed() ? queueCmd("shoot", arg) : true);
         }
         potCount = 0; // shooting the tank doesn't give a lot of points, so if we do it too much, we risk our opponent beating us
 
-        return Arrays.stream(getPowerUps())
+        final Vec2 centroid = calculateCentroid(getPowerUps()[0].getPos(), getPowerUps()[1].getPos(), getPowerUps()[2].getPos());
+        final PowerUp[] toRank = Arrays.copyOf(getPowerUps(), getPowerUps().length + 1);
+        toRank[toRank.length - 1] = new DummyPowerUp(centroid);
+        return Arrays.stream(toRank)
+            .filter(TankAI::isGameObjectInBounds)
             .sorted(this::comparePowerUps)
             .findFirst()
             .map(powerUp -> {
                 final Vec2 dist = powerUp.getPos().subtract(getTankPos());
 
-                return queueCmd("move", dist);
+                return queueCmd("move", dist.subtract(dist.unit().multiply(0.25)));
             }).orElse(false);
     }
 
-    private static Vec2 calculateMiddle(Vec2 a, Vec2 b, Vec2 c) {
-        final Vec2 mid1 = a.add(b).divide(2);
-        final Vec2 mid2 = a.add(c).divide(2);
-        final double slope1 = (a.y - mid1.y) / (a.x - mid1.x);
-        final double slope2 = (a.y - mid2.y) / (a.x - mid2.x);
-        final double x = (slope1 * mid1.x - slope2 * mid2.x + mid1.y - mid2.y) / (slope1 - slope2);
-        final double y = (mid2.y / slope2 - mid1.y / slope1 + mid1.x - mid2.x) / (1 / slope2 - 1 / slope1);
+    private static Vec2 calculateIntersection(Vec2 a1, Vec2 a2, Vec2 b1, Vec2 b2) {
+        /*
+         * we are just solving these systems of equations:
+         *  y = ((y1-y2)/(x1-x2))(x-x1) + y1
+         *  y = ((y3-y4)/(x3-x4))(x-x3) + y3
+         */
+
+        final double x, y, ax1, ay1, ax2, ay2, bx1, by1, bx2, by2, slope1, slope2, intercept1, intercept2;
+
+        ax1 = a1.x;
+        ay1 = a1.y;
+        ax2 = a2.x;
+        ay2 = a2.y;
+        bx1 = b1.x;
+        by1 = b1.y;
+        bx2 = b2.x;
+        by2 = b2.y;
+
+        slope1 = (ay1 - ay2) / (ax1 - ax2);
+        slope2 = (by1 - by2) / (bx1 - bx2);
+        intercept1 = ay1 - (slope1 * ax1);
+        intercept2 = by1 - (slope2 * bx1);
+
+        x = (intercept2 - intercept1) / (slope1 - slope2);
+        y = slope1 * x + intercept1;
+
         return new Vec2(x, y);
+    }
+
+    private static Vec2 calculateMedian(Vec2 a, Vec2 b) {
+        return new Vec2(
+            (a.x + b.x) / 2,
+            (a.y + b.y) / 2
+        );
+    }
+
+    private static Vec2 calculateCentroid(Vec2 a, Vec2 b, Vec2 c) {
+        final Vec2 ab, bc, ac; // medians of the lines
+        // ab = calculateMedian(a, b);
+        ac = calculateMedian(a, c);
+        bc = calculateMedian(b, c);
+        
+        return calculateIntersection(a, bc, b, ac);
     }
 
     private int compareTargets(Target a, Target b) {
@@ -127,11 +185,14 @@ public class TankAI extends TankAIBase {
         }
 
         final int points = count * Game.POINTS_HIT_TARGET;
-        if (powerUp.getType().equals("S")) {
-            return points + Game.POINTS_POWERUP_PTS;
-        }
-        else {
-            return points;
+        switch (powerUp.getType()) {
+            case "P":
+                return points + Game.POINTS_POWERUP_PTS;
+            case "S":
+                return (int)(points * (1 + Game.POINTS_POWERUP_SPEED / 100));
+        
+            default:
+                return points;
         }
     }
 
@@ -142,17 +203,33 @@ public class TankAI extends TankAIBase {
         );
     }
 
-    private int comparePowerUps(PowerUp a, PowerUp b) {
-        final int comparedDistances = comparePowerUpPointValues(a, b);
-        if (comparedDistances == 0) {
-            return compareDistances(a.getPos(), b.getPos());
-        }
-        return comparedDistances;
+    private boolean canOtherTankGetToPositionFirst(Vec2 position) {
+        return Vec2.copy(position).distance(getTankPos()) / getTankMoveSpeed() <= Vec2.copy(position).distance(getOther().getPos()) / getOther().getMoveSpeed();
     }
-    private int compareDistances(Vec2 a, Vec2 b) {
+
+    private int comparePowerUps(PowerUp a, PowerUp b) {
+        final boolean aWillBeTakenAway = canOtherTankGetToPositionFirst(a.getPos());
+        final boolean bWillBeTakenAway = canOtherTankGetToPositionFirst(b.getPos());
+        if (aWillBeTakenAway && !bWillBeTakenAway) {
+            return -1;
+        }
+        else if (!aWillBeTakenAway && bWillBeTakenAway) {
+            return 1;
+        }
+
+        final int comparedPointValues = comparePowerUpPointValues(a, b);
+        if (comparedPointValues == 0) {
+            if (aWillBeTakenAway && bWillBeTakenAway) {
+                return -compareDistances(a.getPos(), b.getPos(), getOther().getPos());
+            }
+            return compareDistances(a.getPos(), b.getPos(), getTankPos());
+        }
+        return comparedPointValues;
+    }
+    private int compareDistances(Vec2 a, Vec2 b, Vec2 distanceTo) {
         return Double.compare(
-            a.distanceSqr(getTankPos()),
-            b.distanceSqr(getTankPos())
+            a.distanceSqr(distanceTo),
+            b.distanceSqr(distanceTo)
         );
     }
 
@@ -160,31 +237,117 @@ public class TankAI extends TankAIBase {
         return one.distanceSqr(other) <= 0.001;
     }
 
+    private boolean moveVertically(double y) {
+        return queueCmd("move", new Vec2(0, y));
+    }
+    private boolean moveHorizontally(double x) {
+        return queueCmd("move", new Vec2(x, 0));
+    }
+
+    private static final Vec2 minBounds = new Vec2(0.2, 0.2);
+    private static final Vec2 maxBounds = Vec2.subtract(Util.maxCoordFrameUnits(), new Vec2(0.2, 0.2));
+
+    private static boolean isGameObjectInBounds(GameObject go) {
+        return isVecInBounds(go.getPos());
+    }
+    private static boolean isVecInBounds(Vec2 vec) {
+        return areVecsEqual(vec, Vec2.clamp(vec, minBounds, maxBounds));
+    }
+
+    private final class Cmd {
+        public final String cmdStr;
+        public final Vec2 param;
+        public Cmd(String cmdStr, Vec2 param) {
+            this.cmdStr = cmdStr;
+            this.param = param;
+        }
+        public boolean queue() {
+            return queue(false);
+        }
+        public boolean queue(boolean bypassQueue) {
+            return queueCmd(cmdStr, param, true);
+        }
+    }
+
+    private final Queue<Cmd> cmdQueue = new ConcurrentLinkedQueue<>();
+
     @Override
     public boolean queueCmd(String cmdStr, Vec2 param) {
-        if (param.distance(Vec2.zero()) <= 0.1) {
-            return false;
+        return queueCmd(cmdStr, param, false);
+    }
+    private boolean queueCmd(String cmdStr, Vec2 param, boolean bypassQueue) {
+        cmdStr = cmdStr.intern(); // because why not?
+
+        // potshots!
+        if (Vec2.distance(getTankPos(), getOther().getPos()) < 1.5 &&
+        Vec2.dot(getTankDir().unit(), getTankPos().subtract(getOther().getPos()).unit()) > 0.999) {
+            return super.queueCmd("shoot", getTankDir().multiply(1.5));
         }
-        final boolean result;
-        if (cmdStr.equals("move") && param.angle() % 90 != 0) {
-            if (Math.abs(getTankAngle() - (param.x < 0 ? 180 : 0)) < Math.abs(getTankAngle() - (90 * Math.signum(param.y)))) {
-                result = queueCmd("move", Vec2.right().multiply(param.x)) &
-                    queueCmd("move", Vec2.up().multiply(param.y));
-            }
-            else {
-                result = queueCmd("move", Vec2.up().multiply(param.y)) &
-                    queueCmd("move", Vec2.right().multiply(param.x));
-            }
-        }
-        else {
-            result = super.queueCmd(cmdStr, param);
+        else if (!bypassQueue && !cmdStr.equals("shoot") && !cmdQueue.isEmpty()) {
+            Cmd cmd;
+            for (cmd = null; cmd == null; cmd = cmdQueue.remove());
+            return cmd.queue(true);
         }
 
-        // if (getOther() != null &&
-        // areVecsEqual(getOther().getPos().subtract(getTankPos()).normalize(), getTankDir()) &&
-        // !cmdStr.equals("shoot")) {
-        //     return super.queueCmd("shoot", getTankDir());
-        // }
-        return result;
+        if (param.lengthSqr() <= 0.01) {
+            Util.log("discarding command with zero-length parameter");
+            return false;
+        }
+        
+        switch (cmdStr.toLowerCase()) {
+            case "move":
+                {
+                    final Vec2 destination = Vec2.add(getTankPos(), param);
+                    if ((Math.abs(param.x) > 0.000001) && (Math.abs(param.y) > 0.000001)) { // Tanks move only horizontally & vertically
+                        Util.log("Adjusting diagonal move");
+                        final double verticalAngle = 90 * Math.signum(param.y);
+                        final double horizontalAngle = 90 + (-90 * Math.signum(param.x));
+                        final double ourAngle = getTankAngle();
+                        // Try to move in the direction we need to turn the least to get to, but if
+                        // that direction has zero distance, move in the other direction
+                        if (Math.abs(ourAngle - verticalAngle) < Math.abs(ourAngle - horizontalAngle)) {
+                            if (moveVertically(param.y)) {
+                                return cmdQueue.add(new Cmd("move", new Vec2(param.x, 0)));
+                            }
+                            return moveHorizontally(param.x);
+                        }
+                        else {
+                            if (moveHorizontally(param.y)) {
+                                return cmdQueue.add(new Cmd("move", new Vec2(0, param.y)));
+                            }
+                            return moveVertically(param.x);
+                        }
+                    }
+                    else if (Vec2.lengthSqr(param) < 0.001) { // Zero distance
+                        Util.log("discarding zero-distance movement");
+                        return false;
+                    }
+                    else if (!isVecInBounds(destination)) { // out of bounds
+                        Util.log("adjusting out-of-bounds move");
+                        return queueCmd(cmdStr, Vec2.clamp(param, minBounds, maxBounds));
+                    }
+                }
+                break;
+            case "turn":
+                {
+                    if (Vec2.lengthSqr(param) < 0.001) { // Zero direction vector
+                        Util.log("discarding zero-direction rotation");
+                        return false;
+                    }
+                }
+                break;
+            case "shoot":
+                {
+                    if (Vec2.lengthSqr(param) < 0.001) { // Zero direction vector
+                        Util.log("discarding zero-distance shot");
+                        return false;
+                    }
+                }
+                break;
+            default:
+                throw new IllegalArgumentException("Unrecognized command!");
+        }
+
+        return super.queueCmd(cmdStr, param);
     }
 }
