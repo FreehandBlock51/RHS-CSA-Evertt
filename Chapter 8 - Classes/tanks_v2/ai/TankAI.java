@@ -303,11 +303,11 @@ public class TankAI extends TankAIBase {
         Vec2.dot(getTankDir().unit(), getTankPos().subtract(getOther().getPos()).unit()) > 0.999) {
             return super.queueCmd("shoot", getTankDir().multiply(1.5));
         }
-        else if (!bypassQueue && !cmdStr.equals("shoot") && !cmdQueue.isEmpty()) {
-            Cmd cmd;
-            for (cmd = null; cmd == null; cmd = cmdQueue.remove());
-            return cmd.queue(true);
-        }
+        // else if (!bypassQueue && !cmdStr.equals("shoot") && !cmdQueue.isEmpty()) {
+        //     Cmd cmd;
+        //     for (cmd = null; cmd == null; cmd = cmdQueue.remove());
+        //     return cmd.queue(true);
+        // }
 
         if (param.lengthSqr() <= 0.01) {
             log("discarding command with zero-length parameter");
@@ -327,13 +327,13 @@ public class TankAI extends TankAIBase {
                         // that direction has zero distance, move in the other direction
                         if (Math.abs(ourAngle - verticalAngle) < Math.abs(ourAngle - horizontalAngle)) {
                             if (moveVertically(param.y)) {
-                                return cmdQueue.add(new Cmd("move", new Vec2(param.x, 0)));
+                                return true;// cmdQueue.add(new Cmd("move", new Vec2(param.x, 0)));
                             }
                             return moveHorizontally(param.x);
                         }
                         else {
                             if (moveHorizontally(param.y)) {
-                                return cmdQueue.add(new Cmd("move", new Vec2(0, param.y)));
+                                return true;// cmdQueue.add(new Cmd("move", new Vec2(0, param.y)));
                             }
                             return moveVertically(param.x);
                         }
