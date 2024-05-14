@@ -56,6 +56,10 @@ public class MyElevatorController implements ElevatorController {
             waitRemaining = 0;
         }
 
+        public int getElevatorIndex() {
+            return elevatorIdx;
+        }
+
         public int getTargetFloor() {
             return targetFloor;
         }
@@ -250,13 +254,23 @@ public class MyElevatorController implements ElevatorController {
         
         ElevatorRequest gReq = null;
         for (ElevatorRequest request : globalFloorRequestQueue) {
+            if (Arrays.stream(elevatorStatuses).anyMatch(s -> {
+                if (s.getTargetFloor() != request.floor) {
+                    return false;
+                }
+                final Direction dir = game.getElevatorTravelDirection(s.getElevatorIndex());
+                return dir == null || dir.equals(Direction.None) || dir.equals(targetDirEnum);
+            })) {
+                continue; // floor is already handled
+            }
+
             if ((request.floor - currentFloor) * targetDir < 0 ||
              (individualTarget - request.floor) * targetDir < 0) {
                 continue; // the request isn't on the way
             }
             
-            if (!request.direction.equals(targetDirEnum)) {
-                continue;
+            if (!targetDirEnum.equals(Direction.None) && !request.direction.equals(targetDirEnum)) {
+                continue; // request is in the wrong direction
             }
 
             if (gReq != null && Math.abs(gReq.floor - currentFloor) <= Math.abs(request.floor - currentFloor)) {
@@ -302,7 +316,7 @@ public class MyElevatorController implements ElevatorController {
             final int floorToGoTo = elevatorQueue.get(i);
             if (Arrays.stream(elevatorStatuses).noneMatch(s -> s.getTargetFloor() == floorToGoTo)) {
                 elevatorQueue.removeIf(f -> f.intValue() == floorToGoTo);
-                return gotoFloor(elevatorIdx, floorToGoTo, true);
+                return gotoFloor(elevatorIdx, floorToGoTo, !elevatorQueue.isEmpty());
             }
         }
         return false;
