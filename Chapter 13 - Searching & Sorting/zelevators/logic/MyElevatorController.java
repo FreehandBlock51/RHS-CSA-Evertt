@@ -3,6 +3,7 @@ package logic;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Objects;
 
@@ -90,7 +91,7 @@ public class MyElevatorController implements ElevatorController {
     }
 
     private final ArrayDeque<ElevatorRequest> globalFloorRequestQueue = new ArrayDeque<>();
-    private final ArrayList<ArrayDeque<Integer>> elevatorFloorRequestQueues = new ArrayList<>();
+    private final ArrayList<ArrayList<Integer>> elevatorFloorRequestQueues = new ArrayList<>();
     private ElevatorStatus[] elevatorStatuses;
     private boolean[] elevatorStressStates;
     private static final double ELEVATOR_LOADING_WAIT_TIME = 5;
@@ -109,7 +110,7 @@ public class MyElevatorController implements ElevatorController {
         // initialize reference type collections
         for (int i = 0; i < game.getElevatorCount(); i++) {
             elevatorStatuses[i] = new ElevatorStatus(i);
-            elevatorFloorRequestQueues.add(new ArrayDeque<>());
+            elevatorFloorRequestQueues.add(new ArrayList<>());
         }
     }
 
@@ -131,13 +132,13 @@ public class MyElevatorController implements ElevatorController {
     public void onFloorRequestChanged(int elevatorIdx, int floorIdx, boolean reqEnable) {
         System.out.println("onFloorRequestChanged(" + elevatorIdx + ", " + floorIdx + ", " + reqEnable + ")");
 
-        final ArrayDeque<Integer> elevatorQueue = elevatorFloorRequestQueues.get(elevatorIdx);
+        final ArrayList<Integer> elevatorQueue = elevatorFloorRequestQueues.get(elevatorIdx);
 
         if (reqEnable) {
-            elevatorQueue.offer(floorIdx);
+            elevatorQueue.add(floorIdx);
         }
         else {
-            elevatorQueue.remove(floorIdx);
+            elevatorQueue.remove(Integer.valueOf(floorIdx));
         }
     }
 
@@ -171,7 +172,7 @@ public class MyElevatorController implements ElevatorController {
                 continue;
             }
 
-            ArrayDeque<Integer> eQ = elevatorFloorRequestQueues.get(elev);
+            ArrayList<Integer> eQ = elevatorFloorRequestQueues.get(elev);
             eQ.removeIf(i -> i.intValue() == elevator.getTargetFloor());
             globalFloorRequestQueue.removeIf(r -> r.floor == elevator.getTargetFloor());
 
@@ -214,17 +215,21 @@ public class MyElevatorController implements ElevatorController {
         }
     }
     private boolean gotoNextInIndividualQueue(int elevatorIdx) {
-        final ArrayDeque<Integer> elevatorQueue = elevatorFloorRequestQueues.get(elevatorIdx);
-        int floorToGoTo;
-        while (true) {
-            if (elevatorQueue.isEmpty()) {
-                return false;
-            }
-            floorToGoTo = elevatorQueue.pop();
-            final int testedFloor = floorToGoTo;
-            if (Arrays.stream(elevatorStatuses).noneMatch(s -> s.getTargetFloor() == testedFloor)) {
+        final ArrayList<Integer> elevatorQueue = elevatorFloorRequestQueues.get(elevatorIdx);
+        if (elevatorQueue.isEmpty()) {
+            return false;
+        }
+
+        final double currentFloor = game.getElevatorFloor(elevatorIdx);
+        elevatorQueue.sort(Comparator.comparingDouble(f -> f - currentFloor));
+
+        for (int i = 0; i < elevatorQueue.size(); i++) {
+            final int floorToGoTo = elevatorQueue.get(i);
+            if (Arrays.stream(elevatorStatuses).noneMatch(s -> s.getTargetFloor() == floorToGoTo)) {
+                elevatorQueue.removeIf(f -> f.intValue() == floorToGoTo);
                 return gotoFloor(elevatorIdx, floorToGoTo);
             }
         }
+        return false;
     }
 }
