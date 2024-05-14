@@ -7,11 +7,19 @@ import java.util.stream.Stream;
 
 import game.Game;
 import game.PowerUp;
+import game.Tank;
 import game.TankAIBase;
 import game.Target;
 import game.Vec2;
 
 public class TankAI extends TankAIBase {
+
+    private static class DummyPowerUp extends PowerUp {
+        public static final String POWERUP_TYPE = "D";
+        public DummyPowerUp(Vec2 pos) {
+            super(pos, POWERUP_TYPE);
+        }
+    }
 
     public String getPlayerName() {
         return "Dalton";  // <---- Put your first name here
@@ -25,7 +33,7 @@ public class TankAI extends TankAIBase {
     //  Note that you are not allowed to reach into game code directly or make any
     //  modifications to code in the game package. Use your judgement and ask your 
     //  teacher if you are not sure. If it feels like cheating, it probably is.
-    private static final int POT_MAX = 5;
+    private static final int POT_MAX = 25;
     private int potCount = 0;
 
     public boolean updateAI() {
@@ -59,7 +67,7 @@ public class TankAI extends TankAIBase {
             return true;
         }
         // else {
-        //     final Vec2 dest = calculateMiddle(
+        //     final Vec2 dest = calculateCentroid(
         //         getTargets()[0].getPos(),
         //         getTargets()[1].getPos(),
         //         getTargets()[2].getPos()
@@ -68,6 +76,9 @@ public class TankAI extends TankAIBase {
         //     if (Arrays.stream(getTargets()).map(t -> t.getPos().distance(dest)).filter(d -> d <= getTankShotRange() * 1.5).count() > 1) {
         //         System.out.println(dest.x + ", " + dest.y);
         //         return queueCmd("move", dest.subtract(getTankPos()));
+        //     }
+        //     else {
+        //         return queueCmd("move", dest);
         //     }
         // }
 
@@ -82,24 +93,62 @@ public class TankAI extends TankAIBase {
         }
         potCount = 0; // shooting the tank doesn't give a lot of points, so if we do it too much, we risk our opponent beating us
 
-        return Arrays.stream(getPowerUps())
+        final Vec2 centroid = calculateCentroid(getPowerUps()[0].getPos(), getPowerUps()[1].getPos(), getPowerUps()[2].getPos());
+        final PowerUp[] toRank = Arrays.copyOf(getPowerUps(), getPowerUps().length + 1);
+        toRank[toRank.length - 1] = new DummyPowerUp(centroid);
+        return Arrays.stream(toRank)
             .sorted(this::comparePowerUps)
             .findFirst()
             .map(powerUp -> {
                 final Vec2 dist = powerUp.getPos().subtract(getTankPos());
 
-                return queueCmd("move", dist);
+                return queueCmd("move", dist.subtract(dist.unit().multiply(0.25)));
             }).orElse(false);
     }
 
-    private static Vec2 calculateMiddle(Vec2 a, Vec2 b, Vec2 c) {
-        final Vec2 mid1 = a.add(b).divide(2);
-        final Vec2 mid2 = a.add(c).divide(2);
-        final double slope1 = (a.y - mid1.y) / (a.x - mid1.x);
-        final double slope2 = (a.y - mid2.y) / (a.x - mid2.x);
-        final double x = (slope1 * mid1.x - slope2 * mid2.x + mid1.y - mid2.y) / (slope1 - slope2);
-        final double y = (mid2.y / slope2 - mid1.y / slope1 + mid1.x - mid2.x) / (1 / slope2 - 1 / slope1);
+    private static Vec2 calculateIntersection(Vec2 a1, Vec2 a2, Vec2 b1, Vec2 b2) {
+        /*
+         * we are just solving these systems of equations:
+         *  y = ((y1-y2)/(x1-x2))(x-x1) + y1
+         *  y = ((y3-y4)/(x3-x4))(x-x3) + y3
+         */
+
+        final double x, y, ax1, ay1, ax2, ay2, bx1, by1, bx2, by2, slope1, slope2, intercept1, intercept2;
+
+        ax1 = a1.x;
+        ay1 = a1.y;
+        ax2 = a2.x;
+        ay2 = a2.y;
+        bx1 = b1.x;
+        by1 = b1.y;
+        bx2 = b2.x;
+        by2 = b2.y;
+
+        slope1 = (ay1 - ay2) / (ax1 - ax2);
+        slope2 = (by1 - by2) / (bx1 - bx2);
+        intercept1 = ay1 - (slope1 * ax1);
+        intercept2 = by1 - (slope2 * bx1);
+
+        x = (intercept2 - intercept1) / (slope1 - slope2);
+        y = slope1 * x + intercept1;
+
         return new Vec2(x, y);
+    }
+
+    private static Vec2 calculateMedian(Vec2 a, Vec2 b) {
+        return new Vec2(
+            (a.x + b.x) / 2,
+            (a.y + b.y) / 2
+        );
+    }
+
+    private static Vec2 calculateCentroid(Vec2 a, Vec2 b, Vec2 c) {
+        final Vec2 ab, bc, ac; // medians of the lines
+        // ab = calculateMedian(a, b);
+        ac = calculateMedian(a, c);
+        bc = calculateMedian(b, c);
+        
+        return calculateIntersection(a, bc, b, ac);
     }
 
     private int compareTargets(Target a, Target b) {
@@ -127,11 +176,14 @@ public class TankAI extends TankAIBase {
         }
 
         final int points = count * Game.POINTS_HIT_TARGET;
-        if (powerUp.getType().equals("S")) {
-            return points + Game.POINTS_POWERUP_PTS;
-        }
-        else {
-            return points;
+        switch (powerUp.getType()) {
+            case "P":
+                return points + Game.POINTS_POWERUP_PTS;
+            case "S":
+                return points + (int)(getTankMoveSpeed() + 0.9);
+        
+            default:
+                return points;
         }
     }
 
