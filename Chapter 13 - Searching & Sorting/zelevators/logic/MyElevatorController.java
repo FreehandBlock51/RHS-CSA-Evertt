@@ -62,7 +62,7 @@ public class MyElevatorController implements ElevatorController {
         public void setTargetFloor(int newTarget) {
             targetFloor = newTarget;
             if (hasOutsideRequestForFloor(newTarget)) {
-                waitRemaining = ELEVATOR_LOADING_WAIT_TIME * (1 + elevatorIdx);
+                waitRemaining = ELEVATOR_LOADING_WAIT_TIME + (elevatorIdx * ELEVATOR_WALKING_WAIT_TIME);
             }
             else {
                 waitRemaining = ELEVATOR_UNLOADING_WAIT_TIME;
@@ -85,8 +85,11 @@ public class MyElevatorController implements ElevatorController {
     private final ArrayDeque<ElevatorRequest> globalFloorRequestQueue = new ArrayDeque<>();
     private final ArrayList<ArrayDeque<Integer>> elevatorFloorRequestQueues = new ArrayList<>();
     private ElevatorStatus[] elevatorStatuses;
+    private boolean[] elevatorStressStates;
     private static final double ELEVATOR_LOADING_WAIT_TIME = 5;
-    private static final double ELEVATOR_UNLOADING_WAIT_TIME = 1; // we don't have to wait as long to unload
+    private static final double ELEVATOR_WALKING_WAIT_TIME = 3.5;
+    private static final double ELEVATOR_UNLOADING_WAIT_TIME = 1.5; // we don't have to wait as long to unload
+    private static final int ELEVATOR_STRESS_THRESHOLD = 3;
 
     
     // Event: Game has started
@@ -94,6 +97,7 @@ public class MyElevatorController implements ElevatorController {
         this.game = game;
 
         elevatorStatuses = new ElevatorStatus[game.getElevatorCount()];
+        elevatorStressStates = new boolean[game.getElevatorCount()];
 
         // initialize reference type collections
         for (int i = 0; i < game.getElevatorCount(); i++) {
@@ -163,7 +167,10 @@ public class MyElevatorController implements ElevatorController {
             eQ.removeIf(i -> i.intValue() == elevator.getTargetFloor());
             globalFloorRequestQueue.removeIf(r -> r.floor == elevator.getTargetFloor());
 
-            if (!eQ.isEmpty()) {
+            elevatorStressStates[elev] |= elevatorFloorRequestQueues.get(elev).size() > ELEVATOR_STRESS_THRESHOLD;
+            elevatorStressStates[elev] &= !eQ.isEmpty();
+
+            if (!eQ.isEmpty() || elevatorStressStates[elev]) {
                 gotoNextInIndividualQueue(elev);
             }
             else if (!globalFloorRequestQueue.isEmpty()) {
