@@ -198,8 +198,11 @@ public class MyElevatorController implements ElevatorController {
             elevatorStressStates[elev] |= elevatorFloorRequestQueues.get(elev).size() > ELEVATOR_STRESS_THRESHOLD;
             elevatorStressStates[elev] &= !eQ.isEmpty();
 
-            if (!eQ.isEmpty() || elevatorStressStates[elev]) {
+            if ((!eQ.isEmpty() && globalFloorRequestQueue.isEmpty()) || elevatorStressStates[elev]) {
                 gotoNextInIndividualQueue(elev);
+            }
+            else if (!eQ.isEmpty() && !globalFloorRequestQueue.isEmpty()) {
+                doGlobalVsIndividualDecisionLogic(elev);
             }
             else if (!globalFloorRequestQueue.isEmpty()) {
                 gotoNextInGlobalQueue(elev, false);
@@ -222,6 +225,55 @@ public class MyElevatorController implements ElevatorController {
         }
         elevatorStatuses[elevatorIdx].setTargetFloor(floorIdx, configureTravelDirection);
         return ElevatorController.super.gotoFloor(elevatorIdx, floorIdx);
+    }
+
+    private boolean doGlobalVsIndividualDecisionLogic(int elevatorIdx) {
+        final ArrayList<Integer> elevatorQueue = elevatorFloorRequestQueues.get(elevatorIdx);
+        if (elevatorQueue.isEmpty()) {
+            return gotoNextInGlobalQueue(elevatorIdx, false);
+        }
+
+        final double currentFloor = game.getElevatorFloor(elevatorIdx);
+        elevatorQueue.sort(Comparator.comparingDouble(f -> f - currentFloor));
+        final int individualTarget = elevatorQueue.get(0);
+        final double targetDir = Math.signum(individualTarget - currentFloor);
+        final Direction targetDirEnum;
+        if (targetDir < 0) {
+            targetDirEnum = Direction.Down;
+        }
+        else if (targetDir > 0) {
+            targetDirEnum = Direction.Up;
+        }
+        else {
+            targetDirEnum = Direction.None;
+        }
+        
+        ElevatorRequest gReq = null;
+        for (ElevatorRequest request : globalFloorRequestQueue) {
+            if ((request.floor - currentFloor) * targetDir < 0 ||
+             (individualTarget - request.floor) * targetDir < 0) {
+                continue; // the request isn't on the way
+            }
+            
+            if (!request.direction.equals(targetDirEnum)) {
+                continue;
+            }
+
+            if (gReq != null && Math.abs(gReq.floor - currentFloor) <= Math.abs(request.floor - currentFloor)) {
+                continue;
+            }
+
+            gReq = request;
+        }
+
+        if (gReq != null) {
+            globalFloorRequestQueue.remove(gReq);
+            return gotoFloor(elevatorIdx, gReq.floor, true);
+        }
+        else {
+            elevatorQueue.remove(Integer.valueOf(individualTarget));
+            return gotoFloor(elevatorIdx, individualTarget, !elevatorQueue.isEmpty());
+        }
     }
 
     private boolean gotoNextInGlobalQueue(int elevatorIdx, boolean configureTravelDirection) {
