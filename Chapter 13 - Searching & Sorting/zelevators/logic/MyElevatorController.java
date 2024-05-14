@@ -11,6 +11,7 @@ import game.Elevator;
 import game.ElevatorController;
 import game.Game;
 import game.Simulation;
+import game.Zombie;
 
 public class MyElevatorController implements ElevatorController {
     // Private member data
@@ -70,7 +71,7 @@ public class MyElevatorController implements ElevatorController {
                 return;
             }
             else if (hasOutsideRequestForFloor(targetFloor)) {
-                waitRemaining = ELEVATOR_LOADING_WAIT_TIME + (elevatorIdx * ELEVATOR_WALKING_WAIT_TIME);
+                waitRemaining = calculateLoadingWaitTime(elevatorIdx);
             }
             else {
                 waitRemaining = ELEVATOR_UNLOADING_WAIT_TIME;
@@ -100,6 +101,11 @@ public class MyElevatorController implements ElevatorController {
     private static final int ELEVATOR_STRESS_THRESHOLD = 3;
 
     
+    public static double calculateLoadingWaitTime(int elevatorIdx) {
+        return ELEVATOR_LOADING_WAIT_TIME + (elevatorIdx * ELEVATOR_WALKING_WAIT_TIME);
+    }
+    
+
     // Event: Game has started
     public void onGameStarted(Game game) {
         this.game = game;
@@ -161,6 +167,17 @@ public class MyElevatorController implements ElevatorController {
         // System.out.println("update()");
 
         for (int elev = 0; elev < game.getElevatorCount(); elev++) {
+            if (calculateLoadingWaitTime(elev) >= Zombie.STARVATION_TIME / 2 &&
+             elevatorFloorRequestQueues.get(elev).isEmpty()) { // for insane elevator counts
+                for (int f = 0; f < game.getFloorCount(); f++) {
+                    if (!hasOutsideRequestForFloor(f)) {
+                        gotoFloor(elev, f);
+                        break;
+                    }
+                }
+                continue;
+            }
+
             final ElevatorStatus elevator = elevatorStatuses[elev];
             if (!elevator.hasArrived()) {
                 elevator.reevaluateWaitTime();
@@ -194,7 +211,7 @@ public class MyElevatorController implements ElevatorController {
     @Override
     public boolean gotoFloor(int elevatorIdx, int floorIdx) {
         if (game.isElevatorIsHeadingToFloor(elevatorIdx, floorIdx) ||
-        game.isElevatorIsOnFloor(elevatorIdx, floorIdx)) {
+         game.isElevatorIsOnFloor(elevatorIdx, floorIdx)) {
             return true;
         }
         elevatorStatuses[elevatorIdx].setTargetFloor(floorIdx);
