@@ -81,7 +81,21 @@ public class MyElevatorController implements ElevatorController {
             if (hasArrived()) {
                 return;
             }
-            else if (hasOutsideRequestForFloor(targetFloor)) {
+
+            final boolean isLoading;
+            switch (game.getElevatorTravelDirection(elevatorIdx)) {
+                case Up:
+                    isLoading = game.hasElevatorRequestUp(targetFloor);
+                    break;
+                case Down:
+                    isLoading = game.hasElevatorRequestDown(targetFloor);
+                    break;
+                default:
+                    isLoading = hasOutsideRequestForFloor(targetFloor);
+                    break;
+            }
+
+            if (isLoading) {
                 waitRemaining = calculateLoadingWaitTime(elevatorIdx);
             }
             else {
@@ -211,9 +225,13 @@ public class MyElevatorController implements ElevatorController {
             else if (!globalFloorRequestQueue.isEmpty()) {
                 gotoNextInGlobalQueue(elev, false);
             }
-            else {
-                gotoFloor(elev, game.getFloorCount() / 2);
-            }
+
+            /* Might bring it back in the future, but resetting to the middle
+             * every time seems to just be a waste of points and time at the moment
+             */
+            // else {
+            //     gotoFloor(elev, game.getFloorCount() / 2);
+            // }
         }
     }
 
