@@ -4,13 +4,10 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.Objects;
 
-import game.Elevator;
 import game.ElevatorController;
 import game.Game;
-import game.Simulation;
 import game.Zombie;
 
 public class MyElevatorController implements ElevatorController {
@@ -62,8 +59,18 @@ public class MyElevatorController implements ElevatorController {
         public int getTargetFloor() {
             return targetFloor;
         }
-        public void setTargetFloor(int newTarget) {
+        public void setTargetFloor(int newTarget, boolean configureTravelDirection) {
             targetFloor = newTarget;
+            double floorOffset = targetFloor - game.getElevatorFloor(elevatorIdx);
+            if (!configureTravelDirection || floorOffset == 0) {
+                game.setElevatorTravelDirection(elevatorIdx, Direction.None);
+            }
+            else if (floorOffset < 0) {
+                game.setElevatorTravelDirection(elevatorIdx, Direction.Down);
+            }
+            else {
+                game.setElevatorTravelDirection(elevatorIdx, Direction.Up);
+            }
             reevaluateWaitTime();
         }
         public void reevaluateWaitTime() {
@@ -195,7 +202,7 @@ public class MyElevatorController implements ElevatorController {
                 gotoNextInIndividualQueue(elev);
             }
             else if (!globalFloorRequestQueue.isEmpty()) {
-                gotoNextInGlobalQueue(elev);
+                gotoNextInGlobalQueue(elev, false);
             }
             else {
                 gotoFloor(elev, game.getFloorCount() / 2);
@@ -205,15 +212,19 @@ public class MyElevatorController implements ElevatorController {
 
     @Override
     public boolean gotoFloor(int elevatorIdx, int floorIdx) {
+        return gotoFloor(elevatorIdx, floorIdx, false);
+    }
+
+    public boolean gotoFloor(int elevatorIdx, int floorIdx, boolean configureTravelDirection) {
         if (game.isElevatorIsHeadingToFloor(elevatorIdx, floorIdx) ||
          game.isElevatorIsOnFloor(elevatorIdx, floorIdx)) {
             return true;
         }
-        elevatorStatuses[elevatorIdx].setTargetFloor(floorIdx);
+        elevatorStatuses[elevatorIdx].setTargetFloor(floorIdx, configureTravelDirection);
         return ElevatorController.super.gotoFloor(elevatorIdx, floorIdx);
     }
 
-    private boolean gotoNextInGlobalQueue(int elevatorIdx) {
+    private boolean gotoNextInGlobalQueue(int elevatorIdx, boolean configureTravelDirection) {
         int floorToGoTo;
         while (true) {
             if (globalFloorRequestQueue.isEmpty()) {
@@ -222,7 +233,7 @@ public class MyElevatorController implements ElevatorController {
             floorToGoTo = globalFloorRequestQueue.pop().floor;
             final int testedFloor = floorToGoTo;
             if (Arrays.stream(elevatorStatuses).noneMatch(s -> s.getTargetFloor() == testedFloor)) {
-                return gotoFloor(elevatorIdx, floorToGoTo);
+                return gotoFloor(elevatorIdx, floorToGoTo, configureTravelDirection);
             }
         }
     }
@@ -239,7 +250,7 @@ public class MyElevatorController implements ElevatorController {
             final int floorToGoTo = elevatorQueue.get(i);
             if (Arrays.stream(elevatorStatuses).noneMatch(s -> s.getTargetFloor() == floorToGoTo)) {
                 elevatorQueue.removeIf(f -> f.intValue() == floorToGoTo);
-                return gotoFloor(elevatorIdx, floorToGoTo);
+                return gotoFloor(elevatorIdx, floorToGoTo, true);
             }
         }
         return false;
