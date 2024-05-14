@@ -48,10 +48,13 @@ public class MyElevatorController implements ElevatorController {
     private final ArrayList<ArrayDeque<Integer>> elevatorFloorRequestQueues = new ArrayList<>();
     private int[] elevatorTargetFloors;
     private double[] elevatorWaitTimes;
+    private boolean[] floorRequestStatuses;
     private int[] elevatorStressLevels;
     private static final int MAX_STRESS = 5;
-    private static final double ELEVATOR_WAIT_TIME = 5;
+    private static final double ELEVATOR_LOADING_WAIT_TIME = 5;
+    private static final double ELEVATOR_UNLOADING_WAIT_TIME = 3; // we don't have to wait as long to unload
 
+    
     // Event: Game has started
     public void onGameStarted(Game game) {
         this.game = game;
@@ -59,6 +62,7 @@ public class MyElevatorController implements ElevatorController {
         elevatorTargetFloors = new int[game.getElevatorCount()];
         elevatorWaitTimes = new double[game.getElevatorCount()];
         elevatorStressLevels = new int[game.getElevatorCount()];
+        floorRequestStatuses = new boolean[game.getFloorCount()];
 
         // initialize elevator queues
         for (int i = 0; i < game.getElevatorCount(); i++) {
@@ -71,6 +75,7 @@ public class MyElevatorController implements ElevatorController {
     public void onElevatorRequestChanged(int floorIdx, Direction dir, boolean reqEnable) {
         System.out.println("onElevatorRequestChanged(" + floorIdx + ", " + dir + ", " + reqEnable + ")");
 
+        floorRequestStatuses[floorIdx] |= reqEnable;
         if (reqEnable) {
             globalFloorRequestQueue.offer(new ElevatorRequest(floorIdx, dir));
         }
@@ -102,14 +107,22 @@ public class MyElevatorController implements ElevatorController {
         // elevatorFloorRequestQueues.get(elevatorIdx).removeIf(i -> i.intValue() == floorIdx);
         // globalFloorRequestQueue.removeIf(i -> i.equals(new ElevatorRequest(floorIdx, travelDirection)));
 
-        // if (elevatorTargetFloors[elevatorIdx] == floorIdx) {
-            elevatorWaitTimes[elevatorIdx] = ELEVATOR_WAIT_TIME * (1 + elevatorIdx); // time it takes to travel to the elevator
-        // }
+        if (hasOutsideRequestForFloor(floorIdx)) {
+            System.out.println("   requests at floor " + floorIdx);
+            elevatorWaitTimes[elevatorIdx] = ELEVATOR_LOADING_WAIT_TIME * (1 + elevatorIdx); // time it takes to travel to the elevator
+            floorRequestStatuses[floorIdx] = false;
+        }
+        else {
+            System.out.println("no requests at floor " + floorIdx);
+            elevatorWaitTimes[elevatorIdx] = ELEVATOR_UNLOADING_WAIT_TIME;
+        }
     }
 
     public boolean hasOutsideRequestForFloor(int floorIdx) {
-        return game.hasElevatorRequestDown(floorIdx) ||
-            game.hasElevatorRequestUp(floorIdx);
+        return floorRequestStatuses[floorIdx] ||
+         game.hasElevatorRequestDown(floorIdx) ||
+         game.hasElevatorRequestUp(floorIdx) ||
+         globalFloorRequestQueue.stream().anyMatch(r -> r.floor == floorIdx);
     }
 
     // Event: Called each frame of the simulation (i.e. called continuously)
@@ -121,8 +134,7 @@ public class MyElevatorController implements ElevatorController {
         // System.out.println("update()");
 
         for (int elev = 0; elev < game.getElevatorCount(); elev++) {
-            if (!game.isElevatorIsOnFloor(elev, elevatorTargetFloors[elev]) ||
-             hasOutsideRequestForFloor(elev)) {
+            if (!game.isElevatorIsOnFloor(elev, elevatorTargetFloors[elev])) {
                 continue;
             }
             else if (elevatorWaitTimes[elev] > 0) { // wait for the zombies to actually enter the elevator
@@ -137,34 +149,37 @@ public class MyElevatorController implements ElevatorController {
             eQ.removeIf(i -> i.intValue() == elevatorTargetFloors[curElev]);
             globalFloorRequestQueue.removeIf(r -> r.floor == elevatorTargetFloors[curElev]);
 
-            if (eQ.isEmpty()) {
-                elevatorStressLevels[elev] = 0;
-            }
-            else if (eQ.size() > MAX_STRESS) {
-                elevatorStressLevels[elev] = MAX_STRESS + 1;
-            }
+            // if (eQ.isEmpty()) {
+            //     elevatorStressLevels[elev] = 0;
+            // }
+            // else if (eQ.size() > MAX_STRESS) {
+            //     elevatorStressLevels[elev] = MAX_STRESS + 1;
+            // }
 
-            if (!eQ.isEmpty() && !globalFloorRequestQueue.isEmpty()) {
-                final int primaryTarget = eQ.peek();
-                ElevatorRequest secondaryTarget = globalFloorRequestQueue.peek();
+            // if (!eQ.isEmpty() && !globalFloorRequestQueue.isEmpty()) {
+            //     final int primaryTarget = eQ.peek();
+            //     ElevatorRequest secondaryTarget = globalFloorRequestQueue.peek();
 
-                if (elevatorStressLevels[elev] > MAX_STRESS) {
-                    gotoNextInIndividualQueue(elev);
-                }
-                else if ((secondaryTarget.floor <= game.getElevatorFloor(elev) && primaryTarget <= secondaryTarget.floor) ||
-                (secondaryTarget.floor >= game.getElevatorFloor(elev) && primaryTarget >= secondaryTarget.floor)) {
-                    elevatorStressLevels[elev]++;
-                    gotoNextInGlobalQueue(elev);
-                }
-                else {
-                    gotoNextInIndividualQueue(elev);
-                }
-            }
-            else if (!eQ.isEmpty()) {
+            //     if (elevatorStressLevels[elev] > MAX_STRESS) {
+            //         gotoNextInIndividualQueue(elev);
+            //     }
+            //     else if ((secondaryTarget.floor <= game.getElevatorFloor(elev) && primaryTarget <= secondaryTarget.floor) ||
+            //     (secondaryTarget.floor >= game.getElevatorFloor(elev) && primaryTarget >= secondaryTarget.floor)) {
+            //         elevatorStressLevels[elev]++;
+            //         gotoNextInGlobalQueue(elev);
+            //     }
+            //     else {
+            //         gotoNextInIndividualQueue(elev);
+            //     }
+            // }
+            if (!eQ.isEmpty()) {
                 gotoNextInIndividualQueue(elev);
             }
             else if (!globalFloorRequestQueue.isEmpty()) {
                 gotoNextInGlobalQueue(elev);
+            }
+            else {
+                gotoFloor(elev, game.getFloorCount() / 2);
             }
         }
     }
