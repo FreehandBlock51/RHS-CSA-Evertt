@@ -2,6 +2,7 @@ package logic;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Objects;
 
 import game.Elevator;
@@ -44,28 +45,59 @@ public class MyElevatorController implements ElevatorController {
         }
     }
 
+    private final class ElevatorStatus {
+        private final int elevatorIdx;
+        private int targetFloor;
+        private double waitRemaining;
+
+        public ElevatorStatus(int elevatorIdx) {
+            this.elevatorIdx = elevatorIdx;
+            targetFloor = -1;
+            waitRemaining = 0;
+        }
+
+        public int getTargetFloor() {
+            return targetFloor;
+        }
+        public void setTargetFloor(int newTarget) {
+            targetFloor = newTarget;
+            if (hasOutsideRequestForFloor(newTarget)) {
+                waitRemaining = ELEVATOR_LOADING_WAIT_TIME * (1 + elevatorIdx);
+            }
+            else {
+                waitRemaining = ELEVATOR_UNLOADING_WAIT_TIME;
+            }
+        }
+        public boolean hasArrived() {
+            if (targetFloor < 0 || targetFloor >= game.getFloorCount()) {
+                return true;
+            }
+            return game.isElevatorIsOnFloor(elevatorIdx, targetFloor);
+        }
+        public boolean isWaiting() {
+            return waitRemaining > 0; 
+        }
+        public void decreaseRemainingWaitTime(double timePassed) {
+            waitRemaining -= timePassed;
+        }
+    }
+
     private final ArrayDeque<ElevatorRequest> globalFloorRequestQueue = new ArrayDeque<>();
     private final ArrayList<ArrayDeque<Integer>> elevatorFloorRequestQueues = new ArrayList<>();
-    private int[] elevatorTargetFloors;
-    private double[] elevatorWaitTimes;
-    private boolean[] floorRequestStatuses;
-    private int[] elevatorStressLevels;
-    private static final int MAX_STRESS = 5;
+    private ElevatorStatus[] elevatorStatuses;
     private static final double ELEVATOR_LOADING_WAIT_TIME = 5;
-    private static final double ELEVATOR_UNLOADING_WAIT_TIME = 3; // we don't have to wait as long to unload
+    private static final double ELEVATOR_UNLOADING_WAIT_TIME = 1; // we don't have to wait as long to unload
 
     
     // Event: Game has started
     public void onGameStarted(Game game) {
         this.game = game;
 
-        elevatorTargetFloors = new int[game.getElevatorCount()];
-        elevatorWaitTimes = new double[game.getElevatorCount()];
-        elevatorStressLevels = new int[game.getElevatorCount()];
-        floorRequestStatuses = new boolean[game.getFloorCount()];
+        elevatorStatuses = new ElevatorStatus[game.getElevatorCount()];
 
-        // initialize elevator queues
+        // initialize reference type collections
         for (int i = 0; i < game.getElevatorCount(); i++) {
+            elevatorStatuses[i] = new ElevatorStatus(i);
             elevatorFloorRequestQueues.add(new ArrayDeque<>());
         }
     }
@@ -75,7 +107,6 @@ public class MyElevatorController implements ElevatorController {
     public void onElevatorRequestChanged(int floorIdx, Direction dir, boolean reqEnable) {
         System.out.println("onElevatorRequestChanged(" + floorIdx + ", " + dir + ", " + reqEnable + ")");
 
-        floorRequestStatuses[floorIdx] |= reqEnable;
         if (reqEnable) {
             globalFloorRequestQueue.offer(new ElevatorRequest(floorIdx, dir));
         }
@@ -97,32 +128,16 @@ public class MyElevatorController implements ElevatorController {
         else {
             elevatorQueue.remove(floorIdx);
         }
-
     }
 
     // Event: Elevator has arrived at the floor & doors are open.
     public void onElevatorArrivedAtFloor(int elevatorIdx, int floorIdx, Direction travelDirection) {
         System.out.println("onElevatorArrivedAtFloor(" + elevatorIdx + ", " + floorIdx + ", " + travelDirection + ")");
-
-        // elevatorFloorRequestQueues.get(elevatorIdx).removeIf(i -> i.intValue() == floorIdx);
-        // globalFloorRequestQueue.removeIf(i -> i.equals(new ElevatorRequest(floorIdx, travelDirection)));
-
-        if (hasOutsideRequestForFloor(floorIdx)) {
-            System.out.println("   requests at floor " + floorIdx);
-            elevatorWaitTimes[elevatorIdx] = ELEVATOR_LOADING_WAIT_TIME * (1 + elevatorIdx); // time it takes to travel to the elevator
-            floorRequestStatuses[floorIdx] = false;
-        }
-        else {
-            System.out.println("no requests at floor " + floorIdx);
-            elevatorWaitTimes[elevatorIdx] = ELEVATOR_UNLOADING_WAIT_TIME;
-        }
     }
 
     public boolean hasOutsideRequestForFloor(int floorIdx) {
-        return floorRequestStatuses[floorIdx] ||
-         game.hasElevatorRequestDown(floorIdx) ||
-         game.hasElevatorRequestUp(floorIdx) ||
-         globalFloorRequestQueue.stream().anyMatch(r -> r.floor == floorIdx);
+        return game.hasElevatorRequestDown(floorIdx) ||
+         game.hasElevatorRequestUp(floorIdx);
     }
 
     // Event: Called each frame of the simulation (i.e. called continuously)
@@ -134,44 +149,20 @@ public class MyElevatorController implements ElevatorController {
         // System.out.println("update()");
 
         for (int elev = 0; elev < game.getElevatorCount(); elev++) {
-            if (!game.isElevatorIsOnFloor(elev, elevatorTargetFloors[elev])) {
+            final ElevatorStatus elevator = elevatorStatuses[elev];
+            if (!elevator.hasArrived()) {
                 continue;
             }
-            else if (elevatorWaitTimes[elev] > 0) { // wait for the zombies to actually enter the elevator
-                elevatorWaitTimes[elev] -= deltaTime;
+            else if (elevator.isWaiting()) { // wait for the zombies to actually enter the elevator
+                elevator.decreaseRemainingWaitTime(deltaTime);
                 // System.out.println("\televator " + elev + ": " + elevatorWaitTimes[elev] + " seconds remaining until door close");
                 continue;
             }
 
             ArrayDeque<Integer> eQ = elevatorFloorRequestQueues.get(elev);
+            eQ.removeIf(i -> i.intValue() == elevator.getTargetFloor());
+            globalFloorRequestQueue.removeIf(r -> r.floor == elevator.getTargetFloor());
 
-            final int curElev = elev; // for the predicates
-            eQ.removeIf(i -> i.intValue() == elevatorTargetFloors[curElev]);
-            globalFloorRequestQueue.removeIf(r -> r.floor == elevatorTargetFloors[curElev]);
-
-            // if (eQ.isEmpty()) {
-            //     elevatorStressLevels[elev] = 0;
-            // }
-            // else if (eQ.size() > MAX_STRESS) {
-            //     elevatorStressLevels[elev] = MAX_STRESS + 1;
-            // }
-
-            // if (!eQ.isEmpty() && !globalFloorRequestQueue.isEmpty()) {
-            //     final int primaryTarget = eQ.peek();
-            //     ElevatorRequest secondaryTarget = globalFloorRequestQueue.peek();
-
-            //     if (elevatorStressLevels[elev] > MAX_STRESS) {
-            //         gotoNextInIndividualQueue(elev);
-            //     }
-            //     else if ((secondaryTarget.floor <= game.getElevatorFloor(elev) && primaryTarget <= secondaryTarget.floor) ||
-            //     (secondaryTarget.floor >= game.getElevatorFloor(elev) && primaryTarget >= secondaryTarget.floor)) {
-            //         elevatorStressLevels[elev]++;
-            //         gotoNextInGlobalQueue(elev);
-            //     }
-            //     else {
-            //         gotoNextInIndividualQueue(elev);
-            //     }
-            // }
             if (!eQ.isEmpty()) {
                 gotoNextInIndividualQueue(elev);
             }
@@ -190,7 +181,7 @@ public class MyElevatorController implements ElevatorController {
         game.isElevatorIsOnFloor(elevatorIdx, floorIdx)) {
             return true;
         }
-        elevatorTargetFloors[elevatorIdx] = floorIdx;
+        elevatorStatuses[elevatorIdx].setTargetFloor(floorIdx);
         return ElevatorController.super.gotoFloor(elevatorIdx, floorIdx);
     }
 
