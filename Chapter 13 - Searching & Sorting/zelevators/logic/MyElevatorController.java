@@ -169,12 +169,7 @@ public class MyElevatorController implements ElevatorController {
         for (int elev = 0; elev < game.getElevatorCount(); elev++) {
             if (calculateLoadingWaitTime(elev) >= Zombie.STARVATION_TIME / 2 &&
              elevatorFloorRequestQueues.get(elev).isEmpty()) { // for insane elevator counts
-                for (int f = 0; f < game.getFloorCount(); f++) {
-                    if (!hasOutsideRequestForFloor(f)) {
-                        gotoFloor(elev, f);
-                        break;
-                    }
-                }
+                gotoNextInIndividualQueue(elev);
                 continue;
             }
 
