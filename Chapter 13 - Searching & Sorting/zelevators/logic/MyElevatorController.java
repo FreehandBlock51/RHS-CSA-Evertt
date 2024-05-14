@@ -2,6 +2,7 @@ package logic;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Objects;
 
@@ -61,7 +62,13 @@ public class MyElevatorController implements ElevatorController {
         }
         public void setTargetFloor(int newTarget) {
             targetFloor = newTarget;
-            if (hasOutsideRequestForFloor(newTarget)) {
+            reevaluateWaitTime();
+        }
+        public void reevaluateWaitTime() {
+            if (hasArrived()) {
+                return;
+            }
+            else if (hasOutsideRequestForFloor(targetFloor)) {
                 waitRemaining = ELEVATOR_LOADING_WAIT_TIME + (elevatorIdx * ELEVATOR_WALKING_WAIT_TIME);
             }
             else {
@@ -155,6 +162,7 @@ public class MyElevatorController implements ElevatorController {
         for (int elev = 0; elev < game.getElevatorCount(); elev++) {
             final ElevatorStatus elevator = elevatorStatuses[elev];
             if (!elevator.hasArrived()) {
+                elevator.reevaluateWaitTime();
                 continue;
             }
             else if (elevator.isWaiting()) { // wait for the zombies to actually enter the elevator
@@ -193,9 +201,30 @@ public class MyElevatorController implements ElevatorController {
     }
 
     private boolean gotoNextInGlobalQueue(int elevatorIdx) {
-        return gotoFloor(elevatorIdx, globalFloorRequestQueue.pop().floor);
+        int floorToGoTo;
+        while (true) {
+            if (globalFloorRequestQueue.isEmpty()) {
+                return false;
+            }
+            floorToGoTo = globalFloorRequestQueue.pop().floor;
+            final int testedFloor = floorToGoTo;
+            if (Arrays.stream(elevatorStatuses).noneMatch(s -> s.getTargetFloor() == testedFloor)) {
+                return gotoFloor(elevatorIdx, floorToGoTo);
+            }
+        }
     }
     private boolean gotoNextInIndividualQueue(int elevatorIdx) {
-        return gotoFloor(elevatorIdx, elevatorFloorRequestQueues.get(elevatorIdx).pop());
+        final ArrayDeque<Integer> elevatorQueue = elevatorFloorRequestQueues.get(elevatorIdx);
+        int floorToGoTo;
+        while (true) {
+            if (elevatorQueue.isEmpty()) {
+                return false;
+            }
+            floorToGoTo = elevatorQueue.pop();
+            final int testedFloor = floorToGoTo;
+            if (Arrays.stream(elevatorStatuses).noneMatch(s -> s.getTargetFloor() == testedFloor)) {
+                return gotoFloor(elevatorIdx, floorToGoTo);
+            }
+        }
     }
 }
