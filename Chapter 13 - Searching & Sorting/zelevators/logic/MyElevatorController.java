@@ -176,6 +176,23 @@ public class MyElevatorController implements ElevatorController {
     // Event: Elevator has arrived at the floor & doors are open.
     public void onElevatorArrivedAtFloor(int elevatorIdx, int floorIdx, Direction travelDirection) {
         System.out.println("onElevatorArrivedAtFloor(" + elevatorIdx + ", " + floorIdx + ", " + travelDirection + ")");
+
+        if (elevatorStatuses[elevatorIdx].getTargetFloor() == floorIdx) {
+            elevatorStatuses[elevatorIdx].reevaluateWaitTime();
+            elevatorFloorRequestQueues.get(elevatorIdx).removeIf(i -> i.intValue() == floorIdx);
+            globalFloorRequestQueue.removeIf(r -> r.floor == floorIdx && willElevatorAcceptPassenger(r.direction, travelDirection));
+        }
+    }
+
+    private static boolean willElevatorAcceptPassenger(Direction requestDirection, Direction elevatorDirection) {
+        switch (elevatorDirection) {
+            case Up:
+                return requestDirection.equals(Direction.Up);    
+            case Down:
+                return requestDirection.equals(Direction.Down);
+            default:
+                return true;
+        }
     }
 
     public boolean hasOutsideRequestForFloor(int floorIdx) {
