@@ -83,16 +83,24 @@ public class MyElevatorController implements ElevatorController {
             }
 
             final boolean isLoading;
-            switch (game.getElevatorTravelDirection(elevatorIdx)) {
-                case Up:
-                    isLoading = game.hasElevatorRequestUp(targetFloor);
-                    break;
-                case Down:
-                    isLoading = game.hasElevatorRequestDown(targetFloor);
-                    break;
-                default:
-                    isLoading = hasOutsideRequestForFloor(targetFloor);
-                    break;
+            if (elevatorStressStates[elevatorIdx] ||
+             Arrays.stream(elevatorStatuses).anyMatch(s -> 
+             s.elevatorIdx < elevatorIdx && s.targetFloor == targetFloor &&
+             MyElevatorController.willElevatorAcceptPassenger(game.getElevatorTravelDirection(elevatorIdx), game.getElevatorTravelDirection(s.elevatorIdx)))) {
+                isLoading = false;
+            }
+            else {
+                switch (game.getElevatorTravelDirection(elevatorIdx)) {
+                    case Up:
+                        isLoading = game.hasElevatorRequestUp(targetFloor);
+                        break;
+                    case Down:
+                        isLoading = game.hasElevatorRequestDown(targetFloor);
+                        break;
+                    default:
+                        isLoading = hasOutsideRequestForFloor(targetFloor);
+                        break;
+                }
             }
 
             if (isLoading) {
@@ -177,11 +185,11 @@ public class MyElevatorController implements ElevatorController {
     public void onElevatorArrivedAtFloor(int elevatorIdx, int floorIdx, Direction travelDirection) {
         System.out.println("onElevatorArrivedAtFloor(" + elevatorIdx + ", " + floorIdx + ", " + travelDirection + ")");
 
-        if (elevatorStatuses[elevatorIdx].getTargetFloor() == floorIdx) {
-            elevatorStatuses[elevatorIdx].reevaluateWaitTime();
-            elevatorFloorRequestQueues.get(elevatorIdx).removeIf(i -> i.intValue() == floorIdx);
-            globalFloorRequestQueue.removeIf(r -> r.floor == floorIdx && willElevatorAcceptPassenger(r.direction, travelDirection));
-        }
+        // if (elevatorStatuses[elevatorIdx].getTargetFloor() == floorIdx) {
+        //     elevatorStatuses[elevatorIdx].reevaluateWaitTime();
+        //     elevatorFloorRequestQueues.get(elevatorIdx).removeIf(i -> i.intValue() == floorIdx);
+        //     globalFloorRequestQueue.removeIf(r -> r.floor == floorIdx && willElevatorAcceptPassenger(r.direction, travelDirection));
+        // }
     }
 
     private static boolean willElevatorAcceptPassenger(Direction requestDirection, Direction elevatorDirection) {
@@ -230,6 +238,7 @@ public class MyElevatorController implements ElevatorController {
             eQ.removeIf(i -> i.intValue() == elevator.getTargetFloor());
             globalFloorRequestQueue.removeIf(r -> r.floor == elevator.getTargetFloor());
 
+            elevatorStressStates[elev] |= game.getLevelTimeRemaining() <= 10;
             elevatorStressStates[elev] |= elevatorFloorRequestQueues.get(elev).size() > ELEVATOR_STRESS_THRESHOLD;
             elevatorStressStates[elev] &= !eQ.isEmpty();
 
@@ -325,7 +334,47 @@ public class MyElevatorController implements ElevatorController {
         }
     }
 
+    private boolean isFloorNotHandled(int testedFloor, int excludeElevatorIdx) {
+        return Arrays.stream(elevatorStatuses).noneMatch(s ->
+         s.getElevatorIndex() != excludeElevatorIdx && s.getTargetFloor() == testedFloor);
+    }
+
     private boolean gotoNextInGlobalQueue(int elevatorIdx, boolean configureTravelDirection) {
+        if (globalFloorRequestQueue.isEmpty()) {
+            return false;
+        }
+
+        int unstressedCount = 0;
+        for (boolean stressState : elevatorStressStates) {
+            if (!stressState) {
+                unstressedCount++;
+            }
+        }
+
+        if (globalFloorRequestQueue.stream().distinct().count() <= unstressedCount) {
+            final int currentFloor = (int)game.getElevatorFloor(elevatorIdx);
+            ElevatorRequest bestRequest = null;
+            for (ElevatorRequest req : globalFloorRequestQueue) {
+                if (!isFloorNotHandled(currentFloor, elevatorIdx)) {
+                    continue;
+                }
+                
+                if (bestRequest == null) {
+                    bestRequest = req;
+                    continue;
+                }
+
+                final int reqFloor = req.floor;
+                if (Math.abs(reqFloor - currentFloor) < Math.abs(bestRequest.floor - currentFloor)) {
+                    bestRequest = req;
+                }
+            }
+            if (bestRequest != null) {
+                globalFloorRequestQueue.remove(bestRequest);
+                return gotoFloor(elevatorIdx, bestRequest.floor, configureTravelDirection);
+            }
+        }
+        
         int floorToGoTo;
         while (true) {
             if (globalFloorRequestQueue.isEmpty()) {
@@ -333,7 +382,7 @@ public class MyElevatorController implements ElevatorController {
             }
             floorToGoTo = globalFloorRequestQueue.pop().floor;
             final int testedFloor = floorToGoTo;
-            if (Arrays.stream(elevatorStatuses).noneMatch(s -> s.getTargetFloor() == testedFloor)) {
+            if (isFloorNotHandled(testedFloor, elevatorIdx)) {
                 return gotoFloor(elevatorIdx, floorToGoTo, configureTravelDirection);
             }
         }
