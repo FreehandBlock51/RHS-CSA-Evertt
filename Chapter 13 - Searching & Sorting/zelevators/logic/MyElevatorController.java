@@ -406,14 +406,37 @@ public class MyElevatorController implements ElevatorController {
             }
         }
     }
+
+    private int compareInternalRequests(int elevatorIdx, Integer a, Integer b) {
+        final double currentFloor = game.getElevatorFloor(elevatorIdx);
+        final double distA = a - currentFloor;
+        final double distB = b - currentFloor;
+        final boolean reverse = game.getElevatorTravelDirection(elevatorIdx).equals(Direction.Up);
+
+        if (distA == 0 && distB != 0) {
+            return -1;
+        }
+        else if (distB == 0 && distA != 0) {
+            return 1;
+        }
+        else if (Math.signum(distA) == Math.signum(distB)) {
+            return Double.compare(Math.abs(distA), Math.abs(distB));
+        }
+        else if (distA > 0) {
+            return reverse ? -1 : 1;
+        }
+        else {
+            return reverse ? 1 : -1;
+        }
+    }
+
     private boolean gotoNextInIndividualQueue(int elevatorIdx) {
         final ArrayList<Integer> elevatorQueue = elevatorFloorRequestQueues.get(elevatorIdx);
         if (elevatorQueue.isEmpty()) {
             return false;
         }
 
-        final double currentFloor = game.getElevatorFloor(elevatorIdx);
-        elevatorQueue.sort(Comparator.comparingDouble(f -> f - currentFloor));
+        elevatorQueue.sort((a, b) -> compareInternalRequests(elevatorIdx, a, b));
 
         for (int i = 0; i < elevatorQueue.size(); i++) {
             final int floorToGoTo = elevatorQueue.get(i);
