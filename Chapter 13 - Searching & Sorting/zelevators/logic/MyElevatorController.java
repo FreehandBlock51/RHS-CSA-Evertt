@@ -208,11 +208,28 @@ public class MyElevatorController implements ElevatorController {
          game.hasElevatorRequestUp(floorIdx);
     }
 
+    private boolean shouldPurgeGlobalRequest(ElevatorRequest request) {
+        switch (request.direction) {
+            case Up:
+                return !game.hasElevatorRequestUp(request.floor);
+            case Down:
+                return !game.hasElevatorRequestDown(request.floor);
+        
+            default:
+                return true;
+        }
+    }
+    private boolean shouldPurgeInternalRequest(int elevatorIdx, int floorIdx) {
+        return !game.elevatorHasFloorRequest(elevatorIdx, floorIdx);
+    }
+
     // Event: Called each frame of the simulation (i.e. called continuously)
     public void onUpdate(double deltaTime) {
         if (game == null) {
             return;
         }
+
+        globalFloorRequestQueue.removeIf(this::shouldPurgeGlobalRequest);
 
         // System.out.println("update()");
 
@@ -235,6 +252,8 @@ public class MyElevatorController implements ElevatorController {
             }
 
             ArrayList<Integer> eQ = elevatorFloorRequestQueues.get(elev);
+            eQ.removeIf(floor -> shouldPurgeInternalRequest(elevator.getElevatorIndex(), floor));
+
             eQ.removeIf(i -> i.intValue() == elevator.getTargetFloor());
             globalFloorRequestQueue.removeIf(r -> r.floor == elevator.getTargetFloor());
 
