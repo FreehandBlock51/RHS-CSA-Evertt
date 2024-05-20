@@ -363,18 +363,23 @@ public class MyElevatorController implements ElevatorController {
             return false;
         }
 
-        int unstressedCount = 0;
-        for (boolean stressState : elevatorStressStates) {
-            if (!stressState) {
-                unstressedCount++;
-            }
-        }
+        // int unstressedCount = 0;
+        // for (boolean stressState : elevatorStressStates) {
+        //     if (!stressState) {
+        //         unstressedCount++;
+        //     }
+        // }
 
-        if (globalFloorRequestQueue.stream().distinct().count() <= unstressedCount) {
+        /* if (globalFloorRequestQueue.stream().distinct().count() <= unstressedCount) */ {
             final int currentFloor = (int)game.getElevatorFloor(elevatorIdx);
             ElevatorRequest bestRequest = null;
             for (ElevatorRequest req : globalFloorRequestQueue) {
                 if (!isFloorNotHandled(currentFloor, elevatorIdx)) {
+                    continue;
+                }
+
+                if ((req.direction.equals(Direction.Up) && req.floor > 0 && req.floor < currentFloor) ||
+                 (req.direction.equals(Direction.Down) && req.floor + 1 < game.getFloorCount() && req.floor > currentFloor)) {
                     continue;
                 }
                 
