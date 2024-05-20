@@ -66,7 +66,8 @@ public class MyElevatorController implements ElevatorController {
         public void setTargetFloor(int newTarget, boolean configureTravelDirection) {
             targetFloor = newTarget;
             double floorOffset = targetFloor - game.getElevatorFloor(elevatorIdx);
-            if (!configureTravelDirection || floorOffset == 0) {
+            if (!configureTravelDirection || floorOffset == 0 ||
+             targetFloor <= 0 || targetFloor >= game.getFloorCount() - 1) {
                 game.setElevatorTravelDirection(elevatorIdx, Direction.None);
             }
             else if (floorOffset < 0) {
