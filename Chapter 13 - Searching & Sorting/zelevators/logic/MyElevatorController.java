@@ -1,6 +1,5 @@
 package logic;
 
-import java.security.SecureRandom;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -126,12 +125,11 @@ public class MyElevatorController implements ElevatorController {
         }
     }
 
-    private final SecureRandom sr = new SecureRandom();
     private final ArrayDeque<ElevatorRequest> globalFloorRequestQueue = new ArrayDeque<>();
     private final ArrayList<ArrayList<Integer>> elevatorFloorRequestQueues = new ArrayList<>();
     private ElevatorStatus[] elevatorStatuses;
     private boolean[] elevatorStressStates;
-    private static final double ELEVATOR_LOADING_WAIT_TIME = 4.7;
+    private static final double ELEVATOR_LOADING_WAIT_TIME = 5;
     private static final double ELEVATOR_WALKING_WAIT_TIME = 3;
     private static final double ELEVATOR_UNLOADING_WAIT_TIME = 1.75; // we don't have to wait as long to unload
     private static final int ELEVATOR_STRESS_THRESHOLD = 7;
