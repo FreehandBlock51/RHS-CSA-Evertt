@@ -135,7 +135,7 @@ public class MyElevatorController implements ElevatorController {
     private static final double ELEVATOR_WALKING_WAIT_TIME = 3;
     private static final double ELEVATOR_UNLOADING_WAIT_TIME = 1.75; // we don't have to wait as long to unload
     private static final int ELEVATOR_STRESS_THRESHOLD = 7;
-    private static final int ELEVATOR_CAPACITY_SOFT_LIMIT = 5;
+    private static final int ELEVATOR_CAPACITY_SOFT_LIMIT = 1;
 
     
     public static double calculateLoadingWaitTime(int elevatorIdx) {
@@ -364,8 +364,8 @@ public class MyElevatorController implements ElevatorController {
             return false;
         }
 
-        if (globalFloorRequestQueue.size() * 3 < game.getFloorCount() * 2 && // to avoid overflow
-         (sr.nextDouble() < 0.8)) { // random, but weighted towards this algorithim
+        /* if (globalFloorRequestQueue.size() * 3 < game.getFloorCount() * 2 && // to avoid overflow
+         (sr.nextDouble() < 0.8)) */ { // random, but weighted towards this algorithim
             final int currentFloor = (int)game.getElevatorFloor(elevatorIdx);
             ElevatorRequest bestRequest = null;
             for (ElevatorRequest req : globalFloorRequestQueue) {
