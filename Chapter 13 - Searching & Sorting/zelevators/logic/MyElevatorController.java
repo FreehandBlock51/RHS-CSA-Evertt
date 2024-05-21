@@ -1,5 +1,6 @@
 package logic;
 
+import java.security.SecureRandom;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -125,14 +126,16 @@ public class MyElevatorController implements ElevatorController {
         }
     }
 
+    private final SecureRandom sr = new SecureRandom();
     private final ArrayDeque<ElevatorRequest> globalFloorRequestQueue = new ArrayDeque<>();
     private final ArrayList<ArrayList<Integer>> elevatorFloorRequestQueues = new ArrayList<>();
     private ElevatorStatus[] elevatorStatuses;
     private boolean[] elevatorStressStates;
     private static final double ELEVATOR_LOADING_WAIT_TIME = 4.7;
     private static final double ELEVATOR_WALKING_WAIT_TIME = 3;
-    private static final double ELEVATOR_UNLOADING_WAIT_TIME = 1.5; // we don't have to wait as long to unload
-    private static final int ELEVATOR_STRESS_THRESHOLD = 5;
+    private static final double ELEVATOR_UNLOADING_WAIT_TIME = 1.75; // we don't have to wait as long to unload
+    private static final int ELEVATOR_STRESS_THRESHOLD = 7;
+    private static final int ELEVATOR_CAPACITY_SOFT_LIMIT = 5;
 
     
     public static double calculateLoadingWaitTime(int elevatorIdx) {
@@ -259,8 +262,8 @@ public class MyElevatorController implements ElevatorController {
             globalFloorRequestQueue.removeIf(r -> r.floor == elevator.getTargetFloor());
 
             elevatorStressStates[elev] |= game.getLevelTimeRemaining() <= 10;
-            elevatorStressStates[elev] |= elevatorFloorRequestQueues.get(elev).size() > ELEVATOR_STRESS_THRESHOLD;
-            elevatorStressStates[elev] &= !eQ.isEmpty();
+            elevatorStressStates[elev] |= eQ.size() > ELEVATOR_STRESS_THRESHOLD;
+            elevatorStressStates[elev] &= eQ.size() >= ELEVATOR_CAPACITY_SOFT_LIMIT;
 
             if ((!eQ.isEmpty() && globalFloorRequestQueue.isEmpty()) || elevatorStressStates[elev]) {
                 gotoNextInIndividualQueue(elev);
@@ -272,12 +275,9 @@ public class MyElevatorController implements ElevatorController {
                 gotoNextInGlobalQueue(elev, false);
             }
 
-            /* Might bring it back in the future, but resetting to the middle
-             * every time seems to just be a waste of points and time at the moment
-             */
-            // else {
-            //     gotoFloor(elev, game.getFloorCount() / 2);
-            // }
+            else {
+                gotoFloor(elev, game.getFloorCount() / 2);
+            }
         }
     }
 
@@ -364,14 +364,8 @@ public class MyElevatorController implements ElevatorController {
             return false;
         }
 
-        // int unstressedCount = 0;
-        // for (boolean stressState : elevatorStressStates) {
-        //     if (!stressState) {
-        //         unstressedCount++;
-        //     }
-        // }
-
-        /* if (globalFloorRequestQueue.stream().distinct().count() <= unstressedCount) */ {
+        if (globalFloorRequestQueue.size() * 3 < game.getFloorCount() * 2 && // to avoid overflow
+         (sr.nextDouble() < 0.8)) { // random, but weighted towards this algorithim
             final int currentFloor = (int)game.getElevatorFloor(elevatorIdx);
             ElevatorRequest bestRequest = null;
             for (ElevatorRequest req : globalFloorRequestQueue) {
