@@ -362,8 +362,7 @@ public class MyElevatorController implements ElevatorController {
             return false;
         }
 
-        /* if (globalFloorRequestQueue.size() * 3 < game.getFloorCount() * 2 && // to avoid overflow
-         (sr.nextDouble() < 0.8)) */ { // random, but weighted towards this algorithim
+        {
             final int currentFloor = (int)game.getElevatorFloor(elevatorIdx);
             ElevatorRequest bestRequest = null;
             for (ElevatorRequest req : globalFloorRequestQueue) {
@@ -391,7 +390,7 @@ public class MyElevatorController implements ElevatorController {
                 return gotoFloor(elevatorIdx, bestRequest.floor, configureTravelDirection);
             }
         }
-        
+
         int floorToGoTo;
         while (true) {
             if (globalFloorRequestQueue.isEmpty()) {
