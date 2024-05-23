@@ -130,7 +130,9 @@ public class MyElevatorController implements ElevatorController {
     private ElevatorStatus[] elevatorStatuses;
     private boolean[] elevatorStressStates;
     private double globalTimer = 0;
+    private double[] individualTimers;
     private static final double GLOBAL_REQUEST_SHORTING_INTERVAL = 5;
+    private static final double INDIVIDUAL_REQUEST_SHORTING_INTERVAL = 15;
     private static final double ELEVATOR_LOADING_WAIT_TIME = 5;
     private static final double ELEVATOR_WALKING_WAIT_TIME = 3;
     private static final double ELEVATOR_UNLOADING_WAIT_TIME = 1.75; // we don't have to wait as long to unload
@@ -149,6 +151,7 @@ public class MyElevatorController implements ElevatorController {
 
         elevatorStatuses = new ElevatorStatus[game.getElevatorCount()];
         elevatorStressStates = new boolean[game.getElevatorCount()];
+        individualTimers = new double[game.getElevatorCount()];
 
         // initialize reference type collections
         for (int i = 0; i < game.getElevatorCount(); i++) {
@@ -245,6 +248,7 @@ public class MyElevatorController implements ElevatorController {
                 continue;
             }
 
+            individualTimers[elev] += deltaTime;
             final ElevatorStatus elevator = elevatorStatuses[elev];
             if (!elevator.hasArrived()) {
                 elevator.reevaluateWaitTime();
@@ -266,7 +270,9 @@ public class MyElevatorController implements ElevatorController {
             elevatorStressStates[elev] |= eQ.size() > ELEVATOR_STRESS_THRESHOLD;
             elevatorStressStates[elev] &= eQ.size() >= ELEVATOR_CAPACITY_SOFT_LIMIT;
 
-            if ((!eQ.isEmpty() && globalFloorRequestQueue.isEmpty()) || elevatorStressStates[elev]) {
+            if (individualTimers[elev] > INDIVIDUAL_REQUEST_SHORTING_INTERVAL ||
+             (!eQ.isEmpty() && globalFloorRequestQueue.isEmpty()) || elevatorStressStates[elev]) {
+                individualTimers[elev] = 0;
                 gotoNextInIndividualQueue(elev);
             }
             else if (!eQ.isEmpty() && !globalFloorRequestQueue.isEmpty()) {
