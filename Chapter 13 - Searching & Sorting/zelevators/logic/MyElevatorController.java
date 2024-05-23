@@ -129,10 +129,12 @@ public class MyElevatorController implements ElevatorController {
     private final ArrayList<ArrayList<Integer>> elevatorFloorRequestQueues = new ArrayList<>();
     private ElevatorStatus[] elevatorStatuses;
     private boolean[] elevatorStressStates;
+    private double globalTimer = 0;
+    private static final double GLOBAL_REQUEST_SHORTING_INTERVAL = 5;
     private static final double ELEVATOR_LOADING_WAIT_TIME = 5;
     private static final double ELEVATOR_WALKING_WAIT_TIME = 3;
     private static final double ELEVATOR_UNLOADING_WAIT_TIME = 1.75; // we don't have to wait as long to unload
-    private static final int ELEVATOR_STRESS_THRESHOLD = 7;
+    private static final int ELEVATOR_STRESS_THRESHOLD = 5;
     private static final int ELEVATOR_CAPACITY_SOFT_LIMIT = 1;
 
     
@@ -232,6 +234,7 @@ public class MyElevatorController implements ElevatorController {
         }
 
         globalFloorRequestQueue.removeIf(this::shouldPurgeGlobalRequest);
+        globalTimer -= deltaTime;
 
         // System.out.println("update()");
 
@@ -362,7 +365,7 @@ public class MyElevatorController implements ElevatorController {
             return false;
         }
 
-        {
+        if (globalTimer > 0) {
             final int currentFloor = (int)game.getElevatorFloor(elevatorIdx);
             ElevatorRequest bestRequest = null;
             for (ElevatorRequest req : globalFloorRequestQueue) {
@@ -390,6 +393,8 @@ public class MyElevatorController implements ElevatorController {
                 return gotoFloor(elevatorIdx, bestRequest.floor, configureTravelDirection);
             }
         }
+
+        globalTimer = GLOBAL_REQUEST_SHORTING_INTERVAL;
 
         int floorToGoTo;
         while (true) {
@@ -437,7 +442,7 @@ public class MyElevatorController implements ElevatorController {
 
         for (int i = 0; i < elevatorQueue.size(); i++) {
             final int floorToGoTo = elevatorQueue.get(i);
-            if (Arrays.stream(elevatorStatuses).noneMatch(s -> s.getTargetFloor() == floorToGoTo)) {
+            if (Arrays.stream(elevatorStatuses).noneMatch(s -> s.getElevatorIndex() != elevatorIdx && s.getTargetFloor() == floorToGoTo)) {
                 elevatorQueue.removeIf(f -> f.intValue() == floorToGoTo);
                 return gotoFloor(elevatorIdx, floorToGoTo, !elevatorQueue.isEmpty());
             }
