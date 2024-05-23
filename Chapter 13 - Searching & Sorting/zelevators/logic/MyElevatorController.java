@@ -132,7 +132,7 @@ public class MyElevatorController implements ElevatorController {
     private double globalTimer = 0;
     private double[] individualTimers;
     private static final double GLOBAL_REQUEST_SHORTING_INTERVAL = 5;
-    private static final double INDIVIDUAL_REQUEST_SHORTING_INTERVAL = 15;
+    private static final double INDIVIDUAL_REQUEST_SHORTING_INTERVAL = 25;
     private static final double ELEVATOR_LOADING_WAIT_TIME = 5;
     private static final double ELEVATOR_WALKING_WAIT_TIME = 3;
     private static final double ELEVATOR_UNLOADING_WAIT_TIME = 1.75; // we don't have to wait as long to unload
