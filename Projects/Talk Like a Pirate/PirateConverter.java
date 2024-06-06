@@ -24,8 +24,6 @@
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.Map;
 import java.util.Scanner;
@@ -59,8 +57,11 @@ public class PirateConverter {
         }
         return loweredTranslation;
     }
+    private static String trimToWord(String untrimmed) {
+        return untrimmed.replaceAll("(^\\W+)|(\\W+$)", "");
+    }
     private static String translateWithExtra(String untrimmedWord) {
-        final String trimmedWord = untrimmedWord.trim();
+        final String trimmedWord = trimToWord(untrimmedWord);
         int wordStart;
         for (wordStart = 0; wordStart <= untrimmedWord.length(); wordStart++) {
             if (untrimmedWord.substring(wordStart).startsWith(trimmedWord)) {
@@ -99,6 +100,7 @@ public class PirateConverter {
             while (scanner.hasNext()) {
                 final String line = scanner.nextLine();
                 b_en.append(line);
+                b_en.append("\n");
                 int i = 0;
                 while (i < line.length()) {
                     int nextSpace = line.indexOf(" ", i);
@@ -119,6 +121,7 @@ public class PirateConverter {
                         i = nextSpace;
                     }
                 }
+                b_pr.append("\n");
             }
         }
         catch (FileNotFoundException fnfe) {
