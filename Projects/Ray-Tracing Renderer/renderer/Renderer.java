@@ -1,5 +1,6 @@
 package renderer;
 
+import java.awt.Color;
 import java.awt.image.WritableRaster;
 import java.util.ArrayList;
 
@@ -45,11 +46,39 @@ public class Renderer implements RendererBase {
      */
     public RayCastResult rayCast(World world, Vec3 rayOrigin, Vec3 rayDirUnit) {
         RayCastResult res = null;
+        double resDist = 0;
 
-        // TODO
+        for (RenderObject object : world.getRenderObjects()) {
+            RayCastResult curResult;
+            try {
+                curResult = object.rayCast(rayOrigin, rayDirUnit);
+            }
+            catch (NullPointerException e) {
+                curResult = null;
+            }
+
+            if (curResult == null) continue;
+            if (res != null && resDist < curResult.pos.distance(rayOrigin)) continue;
+
+            res = curResult;
+            resDist = res.pos.distance(rayOrigin);
+        }
 
         return res;
     }
+
+    private static final double INTERSECT_EPSILON = 0.001;
+    private static boolean areDoublesEqual(double a, double b) {
+        return Math.abs(a - b) < INTERSECT_EPSILON;
+    }
+    private static boolean intersectsRay(Vec3 objPos, Vec3 rayStart, Vec3 rayDirUnit) {
+        final double x = (objPos.x - rayStart.x) / rayDirUnit.x;
+        final double y = (objPos.y - rayStart.y) / rayDirUnit.y;
+        final double z = (objPos.z - rayStart.z) / rayDirUnit.z;
+        return areDoublesEqual(x, y) && areDoublesEqual(y, z);
+    }
+
+    private static final double TAU = Math.PI * 2;
 
     /* render   Performance ray trace rendering from the point of view of the provided camera.
      *          The method should iterate through each pixel in renderTarget, perform the
@@ -65,13 +94,33 @@ public class Renderer implements RendererBase {
      *  @param  camera is the camera objects that has a position, direction, field of view, etc.
      */
     public void render(WritableRaster renderTarget, World world, Camera camera) {
+        double chunkSize = 5;
 
-        // TODO
+        Vec3 cameraPos = camera.getPos();
+        Vec3 cameraLookDir = camera.forward();
+        int height = renderTarget.getHeight();
+        int width = renderTarget.getWidth();
+        int[] colorArr = new int[] {0,0,0,0};
 
-        // Remove this code - this is just to demonstrate how to write into the renderTarget
         for (int y = 0; y < renderTarget.getHeight(); y++) {
             for (int x = 0; x < renderTarget.getWidth(); x++) {
-                renderTarget.setPixel(x, y, new int[] { (int)(Math.random() * 150), (int)(Math.random() * 150), (int)(Math.random() * 150), 255 }); // R, G, B, Alpha (0 to 255 values)
+                if ((x % chunkSize == 0 || y % chunkSize == 0) || x * y == 0)
+                {
+                    final Vec3 offset = new Vec3((double)x / width - 0.5, (double)y / height - 0.5, 0);
+                    RayCastResult res = rayCast(world, Vec3.add(cameraPos, offset), Vec3.add(cameraLookDir, offset).unit());
+                    Color color;
+                    if (res == null) {
+                        color = new Color(255, 0, 0);
+                    }
+                    else {
+                        color = res.color;
+                    }
+                    colorArr[0] = color.getRed();
+                    colorArr[1] = color.getGreen();
+                    colorArr[2] = color.getBlue();
+                    colorArr[3] = color.getAlpha();
+                }
+                renderTarget.setPixel(x, y, colorArr); // R, G, B, Alpha (0 to 255 values)
             }
         }
     }
