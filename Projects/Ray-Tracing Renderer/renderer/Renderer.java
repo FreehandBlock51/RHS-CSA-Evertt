@@ -2,7 +2,12 @@ package renderer;
 
 import java.awt.Color;
 import java.awt.image.WritableRaster;
+import java.sql.Time;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Random;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import framework.Camera;
 import framework.RayCastResult;
@@ -79,6 +84,13 @@ public class Renderer implements RendererBase {
     }
 
     private static final double TAU = Math.PI * 2;
+    private static final Random random = new Random();
+    private static final int samples = 1;
+    private static final double maxDeviation = 0;
+    private static final double fieldDepth = 0;
+    private static final int chunkSize = 1;
+
+    // private int frameCount = 0;
 
     /* render   Performance ray trace rendering from the point of view of the provided camera.
      *          The method should iterate through each pixel in renderTarget, perform the
@@ -94,9 +106,8 @@ public class Renderer implements RendererBase {
      *  @param  camera is the camera objects that has a position, direction, field of view, etc.
      */
     public void render(WritableRaster renderTarget, World world, Camera camera) {
-        double chunkSize = 50;
-
         final Vec3 cameraPos = camera.getPos();
+        final Vec3 cameraLookDir = camera.forward();
         final Vec3 nearClipX = camera.getNearClipVecX();
         final Vec3 nearClipY = camera.getNearClipVecY();
         final Vec3 nearClipCenter = camera.getNearClipCenter();
@@ -117,22 +128,36 @@ public class Renderer implements RendererBase {
                     final Vec3 rayP2 = Vec3.add(nearClipCenter, offset);
                     final Vec3 rayP1 = cameraPos;
                     final Vec3 rayDirUnit = Vec3.subtract(rayP2, rayP1).unit();
-                    RayCastResult res = rayCast(world, rayP1, rayDirUnit);
-                    
-                    Color color;
-                    if (res == null) {
-                        color = new Color(255, 0, 0);
+                    rayP2.add(Vec3.multiply(fieldDepth, rayDirUnit));
+                    int r = 0;
+                    int g = 0;
+                    int b = 0;
+                    int a = 0;
+                    for (int i = 0; i < samples; i++) {
+                        final Vec3 randOffset = Vec3.add(
+                            Vec3.multiply(2 * maxDeviation * (random.nextDouble() - 0.5) / halfWidth, nearClipX.unit()),
+                            Vec3.multiply(2 * maxDeviation * (random.nextDouble() - 0.5) / halfHeight, nearClipY.unit())
+                        );
+                        final Vec3 offsetP1 = Vec3.add(rayP1, randOffset);
+                        final Vec3 offsetDirUnit = Vec3.subtract(rayP2, offsetP1).unit();
+                        RayCastResult res = rayCast(world, offsetP1, offsetDirUnit);
+                        if (res != null) {
+                            final Color c = res.color;
+                            r += c.getRed();
+                            g += c.getGreen();
+                            b += c.getBlue();
+                            a += c.getAlpha();
+                        }
                     }
-                    else {
-                        color = res.color;
-                    }
-                    colorArr[0] = color.getRed();
-                    colorArr[1] = color.getGreen();
-                    colorArr[2] = color.getBlue();
-                    colorArr[3] = color.getAlpha();
+
+                    colorArr[0] = r / samples;
+                    colorArr[1] = g / samples;
+                    colorArr[2] = b / samples;
+                    colorArr[3] = a / samples;
                 }
                 renderTarget.setPixel(x, y, colorArr); // R, G, B, Alpha (0 to 255 values)
             }
         }
+        // System.out.println("finished frame " + (++frameCount));
     }
 }
