@@ -94,20 +94,31 @@ public class Renderer implements RendererBase {
      *  @param  camera is the camera objects that has a position, direction, field of view, etc.
      */
     public void render(WritableRaster renderTarget, World world, Camera camera) {
-        double chunkSize = 5;
+        double chunkSize = 50;
 
-        Vec3 cameraPos = camera.getPos();
-        Vec3 cameraLookDir = camera.forward();
-        int height = renderTarget.getHeight();
-        int width = renderTarget.getWidth();
-        int[] colorArr = new int[] {0,0,0,0};
+        final Vec3 cameraPos = camera.getPos();
+        final Vec3 nearClipX = camera.getNearClipVecX();
+        final Vec3 nearClipY = camera.getNearClipVecY();
+        final Vec3 nearClipCenter = camera.getNearClipCenter();
+        final int height = renderTarget.getHeight();
+        final int width = renderTarget.getWidth();
+        final int halfWidth = width / 2;
+        final int halfHeight = height / 2;
+        int[] colorArr = new int[] {0,0,0,255};
 
         for (int y = 0; y < renderTarget.getHeight(); y++) {
             for (int x = 0; x < renderTarget.getWidth(); x++) {
                 if ((x % chunkSize == 0 || y % chunkSize == 0) || x * y == 0)
                 {
-                    final Vec3 offset = new Vec3((double)x / width - 0.5, (double)y / height - 0.5, 0);
-                    RayCastResult res = rayCast(world, Vec3.add(cameraPos, offset), Vec3.add(cameraLookDir, offset).unit());
+                    final Vec3 offset = Vec3.add(
+                        Vec3.multiply((double)(x - halfWidth) / width, nearClipX),
+                        Vec3.multiply((double)(y - halfHeight) / height, nearClipY)
+                    );
+                    final Vec3 rayP2 = Vec3.add(nearClipCenter, offset);
+                    final Vec3 rayP1 = cameraPos;
+                    final Vec3 rayDirUnit = Vec3.subtract(rayP2, rayP1).unit();
+                    RayCastResult res = rayCast(world, rayP1, rayDirUnit);
+                    
                     Color color;
                     if (res == null) {
                         color = new Color(255, 0, 0);
